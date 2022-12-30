@@ -40,11 +40,11 @@ struct studiohdr_t {
     int     numhitboxes;        // complex bounding boxes
     int     offsethitbox;
 
-    int     numseq;             // animation sequences
-    int     offsetseq;
+    int     numSequences;
+    int     offsetSequences;
 
-    int     numseqgroups;       // demand loaded sequences
-    int     offsetseqgroup;
+    int     numSeqGroups;       // demand loaded sequences
+    int     offsetSeqGroups;
 
     int     numTextures;        // raw textures
     int     offsetTextures;
@@ -57,8 +57,8 @@ struct studiohdr_t {
     int     numbodyparts;
     int     offsetbodypart;
 
-    int     numattachments;     // queryable attachable points
-    int     offsetattachment;
+    int     numAttachments;     // queryable attachable points
+    int     offsetAttachments;
 
     int     soundtable;
     int     soundindex;
@@ -116,7 +116,7 @@ PACKED_STRUCT_BEGIN
 struct mstudioseqgroup_t {
     char    label[32];          // textual name
     char    name[64];           // file name
-    void*   cache;              // cache index pointer
+    uint32_t cache;             // cache index pointer  (original code uses void*)
     int     data;               // hack for group 0
 } PACKED_STRUCT_END;
 
@@ -131,16 +131,16 @@ struct mstudioseqdesc_t {
     int     activity;
     int     actweight;
 
-    int     numevents;
-    int     eventindex;
+    int     numEvents;
+    int     offsetEvents;
 
-    int     numframes;          // number of frames per sequence
+    int     numFrames;          // number of frames per sequence
 
     int     numpivots;          // number of foot pivots
     int     pivotindex;
 
-    int     motiontype;
-    int     motionbone;
+    int     motionType;
+    int     motionBone;
     vec3f   linearmovement;
     int     automoveposindex;
     int     automoveangleindex;
@@ -149,7 +149,7 @@ struct mstudioseqdesc_t {
     vec3f   bbmax;
 
     int     numblends;
-    int     animindex;          // mstudioanim_t pointer relative to start of sequence group data
+    int     offsetAnimData;    // mstudioanim_t pointer relative to start of sequence group data
     // [blend][bone][X, Y, Z, XR, YR, ZR]
 
     int     blendtype[2];       // X, Y, Z, XR, YR, ZR
@@ -241,9 +241,8 @@ PACKED_STRUCT_BEGIN
 struct mstudiomodel_t {
     char    name[64];
 
-    int     type;
-
-    float   boundingRadius;
+    int     type;               // Unused ??
+    float   boundingRadius;     // Unused ??
 
     int     numMeshes;
     int     offsetMeshes;
@@ -267,7 +266,7 @@ struct mstudiomesh_t {
     int     offsetTriangles;
     int     skinref;
     int     numNormals;         // per mesh normals
-    int     offsetNormals;      // normal vec3_t
+    int     offsetNormals;      // Unused ??
 } PACKED_STRUCT_END;
 
 

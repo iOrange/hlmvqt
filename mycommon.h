@@ -89,15 +89,13 @@ public:
         : data(other.data)
         , length(other.length)
         , cursor(other.cursor)
-        , ownedPtr(other.ownedPtr)
-        , name(other.name) {
+        , ownedPtr(other.ownedPtr) {
     }
     MemStream(MemStream&& other) noexcept
         : data(other.data)
         , length(other.length)
         , cursor(other.cursor)
-        , ownedPtr(other.ownedPtr)
-        , name(other.name) {
+        , ownedPtr(other.ownedPtr) {
     }
     ~MemStream() {
     }
@@ -107,7 +105,6 @@ public:
         this->length = other.length;
         this->cursor = other.cursor;
         this->ownedPtr = other.ownedPtr;
-        this->name = other.name;
         return *this;
     }
 
@@ -116,7 +113,6 @@ public:
         this->length = other.length;
         this->cursor = other.cursor;
         this->ownedPtr.swap(other.ownedPtr);
-        this->name.swap(other.name);
         return *this;
     }
 
@@ -147,14 +143,6 @@ public:
 
     inline const uint8_t* Data() const {
         return this->data;
-    }
-
-    inline const CharString& Name() const {
-        return this->name;
-    }
-
-    inline void SetName(const CharString& n) {
-        this->name = n;
     }
 
     void ReadToBuffer(void* buffer, const size_t bytesToRead) {
@@ -241,11 +229,10 @@ public:
     }
 
 private:
-    const uint8_t* data;
+    const uint8_t*  data;
     size_t          length;
     size_t          cursor;
     OwnedPtrType    ownedPtr;
-    CharString      name;
 };
 
 template <char a, char b, char c, char d>

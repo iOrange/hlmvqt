@@ -8,6 +8,9 @@
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
+    // https://bugreports.qt.io/browse/QTBUG-108593
+    a.setFont(a.font());
+
     // this is for QSettings
     a.setOrganizationName("iOrange");
     a.setApplicationName("hlmvqt");

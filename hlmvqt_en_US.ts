@@ -34,207 +34,207 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <name>MainWindow</name>
     <message>
         <location filename="mainwindow.ui" line="14"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="225"/>
-        <source>MainWindow</source>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="231"/>
+        <source>Half-Life Model Viewer Qt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="87"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="245"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="251"/>
         <source>Model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="99"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="230"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="236"/>
         <source>Render textured</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="112"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="231"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="237"/>
         <source>Show bones</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="125"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="232"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="238"/>
         <source>Show attachments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="138"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="233"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="239"/>
         <source>Wireframe options:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="150"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="234"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="240"/>
         <source>Wireframe model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="163"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="235"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="241"/>
         <source>Wireframe overlay</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="177"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="236"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="242"/>
         <source>Show hitboxes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="190"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="237"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="243"/>
         <source>Show normals</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="203"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="238"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="244"/>
         <source>Model info:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="215"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="239"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="245"/>
         <source>Name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="228"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="240"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="246"/>
         <source>Textures count:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="241"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="241"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="247"/>
         <source>Body parts count:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="267"/>
         <location filename="mainwindow.ui" line="280"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="243"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="244"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="249"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="250"/>
         <source>0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="287"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="246"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="252"/>
         <source>Body</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="292"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="250"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="256"/>
         <source>Textures</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="320"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="247"/>
+        <location filename="mainwindow.ui" line="338"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="253"/>
         <source>Export as...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="336"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="248"/>
+        <location filename="mainwindow.ui" line="354"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="254"/>
         <source>Is chrome</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="349"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="249"/>
+        <location filename="mainwindow.ui" line="367"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="255"/>
         <source>0 x 0 pixels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="355"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="251"/>
+        <location filename="mainwindow.ui" line="373"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="257"/>
         <source>Sequences</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="374"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="252"/>
+        <location filename="mainwindow.ui" line="392"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="258"/>
         <source>&amp;File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="382"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="253"/>
+        <location filename="mainwindow.ui" line="400"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="259"/>
         <source>Options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="387"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="254"/>
+        <location filename="mainwindow.ui" line="405"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="260"/>
         <source>View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="392"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="255"/>
+        <location filename="mainwindow.ui" line="410"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="261"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="405"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="226"/>
+        <location filename="mainwindow.ui" line="423"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="232"/>
         <source>Load model...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="410"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="227"/>
+        <location filename="mainwindow.ui" line="428"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="233"/>
         <source>E&amp;xit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="415"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="228"/>
+        <location filename="mainwindow.ui" line="433"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="234"/>
         <source>About Qt...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="420"/>
-        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="229"/>
+        <location filename="mainwindow.ui" line="438"/>
+        <location filename="out/build/x64-Debug/hlmvqt_autogen/include/ui_mainwindow.h" line="235"/>
         <source>About...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="102"/>
+        <location filename="mainwindow.cpp" line="114"/>
         <source>Select Half-Life model...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="102"/>
+        <location filename="mainwindow.cpp" line="114"/>
         <source>Half-Life model (*.mdl)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="130"/>
+        <location filename="mainwindow.cpp" line="143"/>
         <source>pixels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
+        <location filename="mainwindow.cpp" line="174"/>
         <source>Where to save texture...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
+        <location filename="mainwindow.cpp" line="174"/>
         <source>BMP image (*.bmp)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="159"/>
+        <location filename="mainwindow.cpp" line="180"/>
         <source>Failed to export texture!</source>
         <translation type="unfinished"></translation>
     </message>

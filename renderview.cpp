@@ -20,19 +20,18 @@ RenderView::RenderView(QWidget* parent)
     , mModel(nullptr)
     , mModelBounds{}
     , mIsFirstFrame(false)
+    , mAnimationFrame(0.0f)
     , mShaderModel(nullptr)
+    , mShaderImage(nullptr)
     , mLightPos(250.0f, 250.0f, 1000.0f)
     , mRenderOptions{}
 {
-    QTimer* timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer->start(33);
-
     mRenderOptions.Reset();
 }
 
 RenderView::~RenderView() {
     delete mShaderModel;
+    delete mShaderImage;
     mTextures.clear();
 }
 
@@ -52,6 +51,12 @@ void RenderView::initializeGL() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     this->MakeShader(mShaderModel, g_VS_DrawModel, g_FS_DrawModel);
+    this->MakeShader(mShaderImage, g_VS_DrawImage, g_FS_DrawImage);
+
+    if (mShaderModel) {
+        mIsChromeLocation = mShaderModel->uniformLocation("isChrome");
+        mShaderModel->setUniformValue(mIsChromeLocation, false);
+    }
 
     mWhiteTexture = MakeStrongPtr<QOpenGLTexture>(QOpenGLTexture::Target2D);
     mWhiteTexture->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
@@ -68,87 +73,139 @@ void RenderView::initializeGL() {
     mViewMat.setToIdentity();
     mProjectionMat.setToIdentity();
     this->UpdateMatrices();
+
+    mTimer.start(16, this);
 }
 
 void RenderView::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (mModel) {
-        mShaderModel->bind();
-        mShaderModel->enableAttributeArray(k_AttribPosition);
-        mShaderModel->enableAttributeArray(k_AttribNormal);
-        mShaderModel->enableAttributeArray(k_AttribUV);
+        if (mRenderOptions.imageViewerMode) {
+            mShaderImage->bind();
+            mShaderImage->enableAttributeArray(k_AttribPosition);
+            mShaderImage->enableAttributeArray(k_AttribUV);
 
-        mShaderModel->setUniformValue("lightPos", mLightPos.x, mLightPos.y, mLightPos.z);
-        mShaderModel->setUniformValue("mv", mModelView);
-        mShaderModel->setUniformValue("mvp", mModelViewProj);
+            QRectF rc = this->rect();
 
-        const bool renderTextured = mRenderOptions.renderTextured && !mRenderOptions.showWireframe;
+            QMatrix4x4 mvp;
+            mvp.ortho(rc);
+            mShaderImage->setUniformValue("mvp", mvp);
 
-        if (mRenderOptions.showWireframe) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        } else {
+            const auto& texture = mTextures[mRenderOptions.textureToShow];
+            texture->bind();
+
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
 
-        const size_t numBodyParts = mModel->GetBodyPartsCount();
-        for (size_t i = 0; i < numBodyParts; ++i) {
-            HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(i);
-            const size_t numStudioModels = bodyPart->GetStudioModelsCount();
+            const float tw = scast<float>(texture->width());
+            const float th = scast<float>(texture->height());
+            const float tx = (rc.width() - tw) * 0.5f;
+            const float ty = (rc.height() - th) * 0.5f;
 
-            for (size_t j = 0; j < 1/*numStudioModels*/; ++j) {
-                HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(j);
+            const RenderVertex vertices[4] = {
+                { vec3f(     tx,      ty, 0.0f), {}, vec2f(0.0f, 0.0f)},
+                { vec3f(tx + tw,      ty, 0.0f), {}, vec2f(1.0f, 0.0f)},
+                { vec3f(     tx, ty + th, 0.0f), {}, vec2f(0.0f, 1.0f)},
+                { vec3f(tx + tw, ty + th, 0.0f), {}, vec2f(1.0f, 1.0f)},
+            };
 
-                const uint16_t* indices = smdl->GetIndices();
-                const HalfLifeModelVertex* srcVertices = smdl->GetVertices();
+            mShaderImage->setAttributeArray(k_AttribPosition, &vertices[0].pos.x, 3, sizeof(RenderVertex));
+            mShaderImage->setAttributeArray(k_AttribUV, &vertices[0].uv.x, 2, sizeof(RenderVertex));
 
-                if (mModel->GetBonesCount() > 0) {
-                    const size_t numVertices = smdl->GetVerticesCount();
-                    mRenderVertices.resize(numVertices);
-                    RenderVertex* renderVertices = mRenderVertices.data();
-                    for (size_t k = 0; k < numVertices; ++k) {
-                        const mat4f& boneMat = mModel->GetBoneMat(srcVertices[k].boneIdx);
-                        renderVertices[k].pos = boneMat.transformPos(srcVertices[k].pos);
-                        renderVertices[k].normal = boneMat.transformDir(srcVertices[k].normal);
-                        renderVertices[k].uv = srcVertices[k].uv;
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        } else {
+            if (mModel->GetBonesCount() > 0 && mModel->GetSequencesCount() > 0) {
+                const HalfLifeModelSequence* sequence = mModel->GetSequence(scast<size_t>(mRenderOptions.animSequence));
 
-                        mModelBounds.Absorb(renderVertices[k].pos);
-                    }
+                QDateTime curTime = QDateTime::currentDateTime();
+                const int deltaMs = qAbs(curTime.time().msecsTo(mLastTime.time()));
+                const float deltaSec = scast<float>(deltaMs) / 1000.0f;
+                mLastTime = curTime;
 
-                    mShaderModel->setAttributeArray(k_AttribPosition, &renderVertices->pos.x, 3, sizeof(RenderVertex));
-                    mShaderModel->setAttributeArray(k_AttribNormal, &renderVertices->normal.x, 3, sizeof(RenderVertex));
-                    mShaderModel->setAttributeArray(k_AttribUV, &renderVertices->uv.x, 2, sizeof(RenderVertex));
-                } else {
-                    mShaderModel->setAttributeArray(k_AttribPosition, &srcVertices->pos.x, 3, sizeof(HalfLifeModelVertex));
-                    mShaderModel->setAttributeArray(k_AttribNormal, &srcVertices->normal.x, 3, sizeof(HalfLifeModelVertex));
-                    mShaderModel->setAttributeArray(k_AttribUV, &srcVertices->uv.x, 2, sizeof(HalfLifeModelVertex));
+                mAnimationFrame += deltaSec * sequence->GetFPS();
+                if (mAnimationFrame >= scast<float>(sequence->GetFramesCount())) {
+                    mAnimationFrame -= scast<float>(sequence->GetFramesCount());
                 }
 
-                const size_t numMeshes = smdl->GetMeshesCount();
-                for (size_t k = 0; k < numMeshes; ++k) {
-                    const HalfLifeModelStudioMesh& mesh = smdl->GetMesh(k);
-                    if (mesh.textureIndex < mTextures.size()) {
-                        if (renderTextured) {
-                            mTextures[mesh.textureIndex]->bind();
-                        } else {
-                            mWhiteTexture->bind();
+                mModel->CalculateSkeleton(mAnimationFrame, scast<size_t>(mRenderOptions.animSequence));
+            }
+
+            mShaderModel->bind();
+            mShaderModel->enableAttributeArray(k_AttribPosition);
+            mShaderModel->enableAttributeArray(k_AttribNormal);
+            mShaderModel->enableAttributeArray(k_AttribUV);
+
+            mShaderModel->setUniformValue("lightPos", mLightPos.x, mLightPos.y, mLightPos.z);
+            mShaderModel->setUniformValue("mv", mModelView);
+            mShaderModel->setUniformValue("mvp", mModelViewProj);
+
+            const bool renderTextured = mRenderOptions.renderTextured && !mRenderOptions.showWireframe;
+
+            if (mRenderOptions.showWireframe) {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            } else {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            }
+
+            const size_t numBodyParts = mModel->GetBodyPartsCount();
+            for (size_t i = 0; i < numBodyParts; ++i) {
+                HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(i);
+                const size_t numStudioModels = bodyPart->GetStudioModelsCount();
+
+                for (size_t j = 0; j < 1/*numStudioModels*/; ++j) {
+                    HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(j);
+
+                    const uint16_t* indices = smdl->GetIndices();
+                    const HalfLifeModelVertex* srcVertices = smdl->GetVertices();
+
+                    if (mModel->GetBonesCount() > 0) {
+                        const size_t numVertices = smdl->GetVerticesCount();
+                        mRenderVertices.resize(numVertices);
+                        RenderVertex* renderVertices = mRenderVertices.data();
+                        for (size_t k = 0; k < numVertices; ++k) {
+                            const mat4f& boneMat = mModel->GetBoneMat(srcVertices[k].boneIdx);
+                            renderVertices[k].pos = boneMat.transformPos(srcVertices[k].pos);
+                            renderVertices[k].normal = boneMat.transformDir(srcVertices[k].normal);
+                            renderVertices[k].uv = srcVertices[k].uv;
+
+                            mModelBounds.Absorb(renderVertices[k].pos);
                         }
 
-                        const HalfLifeModelTexture& hltexture = mModel->GetTexture(mesh.textureIndex);
-                        mShaderModel->setUniformValue(mIsChromeLocation, hltexture.chrome);
+                        mShaderModel->setAttributeArray(k_AttribPosition, &renderVertices->pos.x, 3, sizeof(RenderVertex));
+                        mShaderModel->setAttributeArray(k_AttribNormal, &renderVertices->normal.x, 3, sizeof(RenderVertex));
+                        mShaderModel->setAttributeArray(k_AttribUV, &renderVertices->uv.x, 2, sizeof(RenderVertex));
                     } else {
-                        mWhiteTexture->bind();
-                        mShaderModel->setUniformValue(mIsChromeLocation, false);
+                        mShaderModel->setAttributeArray(k_AttribPosition, &srcVertices->pos.x, 3, sizeof(HalfLifeModelVertex));
+                        mShaderModel->setAttributeArray(k_AttribNormal, &srcVertices->normal.x, 3, sizeof(HalfLifeModelVertex));
+                        mShaderModel->setAttributeArray(k_AttribUV, &srcVertices->uv.x, 2, sizeof(HalfLifeModelVertex));
                     }
 
-                    glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                    const size_t numMeshes = smdl->GetMeshesCount();
+                    for (size_t k = 0; k < numMeshes; ++k) {
+                        const HalfLifeModelStudioMesh& mesh = smdl->GetMesh(k);
+                        if (mesh.textureIndex < mTextures.size()) {
+                            if (renderTextured) {
+                                mTextures[mesh.textureIndex]->bind();
+                            } else {
+                                mWhiteTexture->bind();
+                            }
+
+                            const HalfLifeModelTexture& hltexture = mModel->GetTexture(mesh.textureIndex);
+                            mShaderModel->setUniformValue(mIsChromeLocation, hltexture.chrome);
+                        } else {
+                            mWhiteTexture->bind();
+                            mShaderModel->setUniformValue(mIsChromeLocation, false);
+                        }
+
+                        glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                    }
                 }
             }
-        }
 
-        if (mIsFirstFrame) {
-            this->ResetView();
-            mIsFirstFrame = false;
+            if (mIsFirstFrame) {
+                this->ResetView();
+                mIsFirstFrame = false;
+            }
         }
     }
 }
@@ -209,6 +266,12 @@ void RenderView::wheelEvent(QWheelEvent* event) {
     event->accept();
 }
 
+void RenderView::timerEvent(QTimerEvent* event) {
+    if (mModel) {
+        this->update();
+    }
+}
+
 
 void RenderView::MakeShader(QOpenGLShaderProgram*& shader, const char* vs, const char* fs) {
     shader = new QOpenGLShaderProgram();
@@ -220,9 +283,6 @@ void RenderView::MakeShader(QOpenGLShaderProgram*& shader, const char* vs, const
         shader->link();
         shader->bind();
         shader->setUniformValue("texDiffuse", 0);
-
-        mIsChromeLocation = shader->uniformLocation("isChrome");
-        shader->setUniformValue(mIsChromeLocation, false);
     } else {
         QString log = shader->log();
         delete shader;
@@ -260,6 +320,9 @@ void RenderView::ResetView() {
 void RenderView::SetModel(HalfLifeModel* mdl) {
     mModel = mdl;
     mTextures.clear();
+
+    mAnimationFrame = 0.0f;
+    mLastTime = QDateTime::currentDateTime();
 
     if (mModel) {
         if (mModel->GetBonesCount() > 0) {

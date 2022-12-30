@@ -7,9 +7,21 @@
 #include <QSettings>
 #include <QMimeData>
 #include <QDragEnterEvent>
+#include <QDir>
 
 #include "aboutdlg.h"
 #include "halflifemodel.h"
+
+
+
+static void HLTextureToQImage(const HalfLifeModelTexture& hltexture, QImage& result) {
+    result = QImage(hltexture.data.data(), hltexture.width, hltexture.height, hltexture.width, QImage::Format_Indexed8);
+    QList<uint32_t> imgPal(256);
+    for (qsizetype i = 0; i < imgPal.size(); ++i) {
+        imgPal[i] = qRgb(hltexture.palette[i * 3], hltexture.palette[i * 3 + 1], hltexture.palette[i * 3 + 2]);
+    }
+    result.setColorTable(imgPal);
+}
 
 
 // settings
@@ -123,11 +135,17 @@ void MainWindow::on_actionAbout_triggered() {
 }
 
 
-void MainWindow::on_lstTextures_currentRowChanged(int currentRow) {
-    if (mModel && currentRow >= 0 && currentRow < mModel->GetTexturesCount()) {
-        const HalfLifeModelTexture& hltexture = mModel->GetTexture(currentRow);
+void MainWindow::on_lstTextures_currentItemChanged(QListWidgetItem* current, QListWidgetItem* /*previous*/) {
+    if (mModel && current) {
+        const int textureIdx = current->data(Qt::UserRole).toInt();
+        const HalfLifeModelTexture& hltexture = mModel->GetTexture(textureIdx);
         ui->chkIsChromeTexture->setChecked(hltexture.chrome);
         ui->lblTextureSize->setText(QString("%1 x %2 %3").arg(hltexture.width).arg(hltexture.height).arg(tr("pixels")));
+
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.imageViewerMode = true;
+        options.textureToShow = textureIdx;
+        mRenderView->SetRenderOptions(options);
     }
 }
 
@@ -136,24 +154,27 @@ void MainWindow::on_btnExportTexture_clicked() {
         return;
     }
 
-    const int selectedTextureIdx = ui->lstTextures->currentRow();
+    const auto& items = ui->lstTextures->selectedItems();
+    if (items.isEmpty()) {
+        return;
+    }
+
+    const int selectedTextureIdx = items[0]->data(Qt::UserRole).toInt();
     if (selectedTextureIdx < 0 || selectedTextureIdx > mModel->GetTexturesCount()) {
         return;
     }
 
+    const HalfLifeModelTexture& hltexture = mModel->GetTexture(selectedTextureIdx);
+
     QSettings registry;
     QString lastSaveDir = registry.value(kLastSavePath).toString();
 
-    QString path = QFileDialog::getSaveFileName(this, tr("Where to save texture..."), lastSaveDir, tr("BMP image (*.bmp)"));
-    if (!path.isEmpty()) {
-        const HalfLifeModelTexture& hltexture = mModel->GetTexture(selectedTextureIdx);
+    QString proposedName = QDir(lastSaveDir).filePath(QString::fromStdString(hltexture.name));
 
-        QImage img(hltexture.data.data(), hltexture.width, hltexture.height, hltexture.width, QImage::Format_Indexed8);
-        QList<uint32_t> imgPal(256);
-        for (qsizetype i = 0; i < imgPal.size(); ++i) {
-            imgPal[i] = qRgb(hltexture.palette[i * 3], hltexture.palette[i * 3 + 1], hltexture.palette[i * 3 + 2]);
-        }
-        img.setColorTable(imgPal);
+    QString path = QFileDialog::getSaveFileName(this, tr("Where to save texture..."), proposedName, tr("BMP image (*.bmp)"));
+    if (!path.isEmpty()) {
+        QImage img;
+        HLTextureToQImage(hltexture, img);
 
         if (!img.save(path, "BMP")) {
             QMessageBox::critical(this, this->windowTitle(), tr("Failed to export texture!"));
@@ -173,14 +194,28 @@ void MainWindow::UpdateUIForModel() {
         mRenderView->SetRenderOptions(options);
         ui->chkRenderTextured->setChecked(true);
 
-
+        // textures tab
         ui->lstTextures->clear();
-
         const size_t numTextures = mModel->GetTexturesCount();
         for (size_t i = 0; i < numTextures; ++i) {
             const HalfLifeModelTexture& hltexture = mModel->GetTexture(i);
-            ui->lstTextures->addItem(QString::fromStdString(hltexture.name));
+            QImage img;
+            HLTextureToQImage(hltexture, img);
+
+            QListWidgetItem* item = new QListWidgetItem();
+            item->setText(QString::fromStdString(hltexture.name));
+            item->setIcon(QIcon(QPixmap::fromImage(img)));
+            item->setData(Qt::UserRole, scast<int>(i));
+            ui->lstTextures->addItem(item);
         }
+
+        // sequences tab
+        ui->lstSequences->clear();
+        const size_t numSequences = mModel->GetSequencesCount();
+        for (size_t i = 0; i < numSequences; ++i) {
+            ui->lstSequences->addItem(QString::fromStdString(mModel->GetSequence(i)->GetName()));
+        }
+        ui->lstSequences->setCurrentRow(0);
     }
 }
 
@@ -195,22 +230,38 @@ void MainWindow::on_chkRenderTextured_stateChanged(int state) {
 
 
 void MainWindow::on_chkShowBones_stateChanged(int state) {
-
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.showBones = (Qt::Checked == state);
+        mRenderView->SetRenderOptions(options);
+    }
 }
 
 
 void MainWindow::on_chkShowAttachments_stateChanged(int state) {
-
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.showAttachments = (Qt::Checked == state);
+        mRenderView->SetRenderOptions(options);
+    }
 }
 
 
 void MainWindow::on_chkShowHitBoxes_stateChanged(int state) {
-
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.showHitBoxes = (Qt::Checked == state);
+        mRenderView->SetRenderOptions(options);
+    }
 }
 
 
 void MainWindow::on_chkShowNormals_stateChanged(int state) {
-
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.showNormals = (Qt::Checked == state);
+        mRenderView->SetRenderOptions(options);
+    }
 }
 
 
@@ -235,6 +286,30 @@ void MainWindow::on_chkWireframeoverlay_stateChanged(int state) {
             ui->chkWireframeModel->setChecked(false);
             options.showWireframe = false;
         }
+        mRenderView->SetRenderOptions(options);
+    }
+}
+
+void MainWindow::on_tabBottom_currentChanged(int index) {
+    if (index == 2) { // textures
+        if (!ui->lstTextures->currentItem()) {
+            ui->lstTextures->setCurrentRow(0);
+        } else {
+            this->on_lstTextures_currentItemChanged(ui->lstTextures->currentItem(), nullptr);
+        }
+    } else {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.imageViewerMode = false;
+        options.textureToShow = 0;
+        mRenderView->SetRenderOptions(options);
+    }
+}
+
+
+void MainWindow::on_lstSequences_currentRowChanged(int currentRow) {
+    if (mModel && currentRow >= 0 && currentRow < mModel->GetSequencesCount()) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.animSequence = currentRow;
         mRenderView->SetRenderOptions(options);
     }
 }

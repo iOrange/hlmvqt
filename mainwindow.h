@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QListWidgetItem>
 #include "mycommon.h"
 
 QT_BEGIN_NAMESPACE
@@ -31,7 +32,7 @@ private slots:
     void on_actionE_xit_triggered();
     void on_actionAbout_Qt_triggered();
     void on_actionAbout_triggered();
-    void on_lstTextures_currentRowChanged(int currentRow);
+    void on_lstTextures_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
     void on_btnExportTexture_clicked();
     void on_chkRenderTextured_stateChanged(int state);
     void on_chkShowBones_stateChanged(int state);
@@ -40,6 +41,8 @@ private slots:
     void on_chkShowNormals_stateChanged(int state);
     void on_chkWireframeModel_stateChanged(int state);
     void on_chkWireframeoverlay_stateChanged(int state);
+    void on_tabBottom_currentChanged(int index);
+    void on_lstSequences_currentRowChanged(int currentRow);
 
 private:
     void UpdateUIForModel();

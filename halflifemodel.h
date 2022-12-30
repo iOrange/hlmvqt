@@ -6,6 +6,7 @@
 
 class HalfLifeModelBodypart;
 class HalfLifeModelStudioModel;
+class HalfLifeModelSequence;
 
 PACKED_STRUCT_BEGIN
 struct HalfLifeModelVertex {
@@ -39,9 +40,42 @@ struct HalfLifeModelStudioMesh {
 
 struct HalfLifeModelBone {
     CharString  name;
-    int         parentIdx;
+    int32_t     parentIdx;
     vec3f       pos;
-    quatf       rot;
+    vec3f       rot;
+    // scales used for decoding anims
+    vec3f       scalePos;
+    vec3f       scaleRot;
+};
+
+struct HalfLifeModelAttachment {
+    CharString  name;
+    int32_t     type;
+    int32_t     bone;
+    vec3f       origin;
+    vec3f       vectors[3];
+};
+
+struct HalfLifeModelAnimEvent {
+    uint32_t    frame;
+    uint32_t    event;
+    uint32_t    type;
+    CharString  options;
+};
+
+struct HalfLifeModelSequenceGroup {
+    CharString  label;
+    CharString  name;   // file name
+    int32_t     data;
+};
+
+struct HalfLifeAnimFrame {
+    int16_t offset[3];
+    int16_t rotation[3];
+};
+
+struct HalfLifeAnimLine {
+    MyArray<HalfLifeAnimFrame>  frames;
 };
 
 class HalfLifeModel {
@@ -49,34 +83,46 @@ class HalfLifeModel {
     static const uint32_t kIDSQMagic = MakeFourcc<'I','D','S','Q'>();
 
     using BodyPartPtr = RefPtr<HalfLifeModelBodypart>;
+    using SequencePtr = RefPtr<HalfLifeModelSequence>;
 
 public:
     HalfLifeModel();
     ~HalfLifeModel();
 
-    bool                            LoadFromPath(const fs::path& filePath);
-    bool                            LoadFromMemStream(MemStream& stream, const studiohdr_t& stdhdr);
+    bool                                LoadFromPath(const fs::path& filePath);
+    bool                                LoadFromMemStream(MemStream& stream, const studiohdr_t& stdhdr);
 
-    void                            LoadTextures(MemStream& stream, const size_t numTextures, const size_t texturesOffset);
+    void                                LoadTextures(MemStream& stream, const size_t numTextures, const size_t texturesOffset);
 
-    size_t                          GetBodyPartsCount() const;
-    HalfLifeModelBodypart*          GetBodyPart(const size_t idx) const;
+    size_t                              GetBodyPartsCount() const;
+    HalfLifeModelBodypart*              GetBodyPart(const size_t idx) const;
 
-    size_t                          GetBonesCount() const;
-    const HalfLifeModelBone&        GetBone(const size_t idx) const;
-    const mat4f&                    GetBoneMat(const size_t idx) const;
+    size_t                              GetBonesCount() const;
+    const HalfLifeModelBone&            GetBone(const size_t idx) const;
+    const mat4f&                        GetBoneMat(const size_t idx) const;
 
-    size_t                          GetTexturesCount() const;
-    const HalfLifeModelTexture&     GetTexture(const size_t idx) const;
+    size_t                              GetTexturesCount() const;
+    const HalfLifeModelTexture&         GetTexture(const size_t idx) const;
 
-    const AABBox&                   GetBounds() const;
+    const AABBox&                       GetBounds() const;
+
+    size_t                              GetSequencesCount() const;
+    HalfLifeModelSequence*              GetSequence(const size_t idx) const;
+
+    size_t                              GetAttachmentsCount() const;
+    const HalfLifeModelAttachment&      GetAttachment(const size_t idx) const;
+
+    void                                CalculateSkeleton(const float frame, const size_t sequenceIdx);
 
 private:
-    MyArray<BodyPartPtr>            mBodyParts;
-    MyArray<HalfLifeModelTexture>   mTextures;
-    MyArray<HalfLifeModelBone>      mBones;
-    MyArray<mat4f>                  mSkeleton;
-    AABBox                          mBounds;
+    MyArray<BodyPartPtr>                mBodyParts;
+    MyArray<HalfLifeModelTexture>       mTextures;
+    MyArray<HalfLifeModelBone>          mBones;
+    MyArray<mat4f>                      mSkeleton;
+    AABBox                              mBounds;
+    MyArray<SequencePtr>                mSequences;
+    MyArray<HalfLifeModelSequenceGroup> mSequenceGroups;
+    MyArray<HalfLifeModelAttachment>    mAttachments;
 };
 
 class HalfLifeModelBodypart {
@@ -94,8 +140,8 @@ public:
     HalfLifeModelStudioModel*   GetStudioModel(const size_t idx) const;
 
 private:
-    CharString              mName;
-    MyArray<StudioModelPtr> mModels;
+    CharString                  mName;
+    MyArray<StudioModelPtr>     mModels;
 };
 
 class HalfLifeModelStudioModel {
@@ -103,24 +149,24 @@ public:
     HalfLifeModelStudioModel();
     ~HalfLifeModelStudioModel();
 
-    void                            SetName(const CharString& name);
-    const CharString&               GetName() const;
-    void                            SetType(const int type);
-    int                             GetType() const;
-    void                            SetBoundingRadius(const float r);
-    float                           GetBoundingRadius() const;
+    void                                SetName(const CharString& name);
+    const CharString&                   GetName() const;
+    void                                SetType(const int type);
+    int                                 GetType() const;
+    void                                SetBoundingRadius(const float r);
+    float                               GetBoundingRadius() const;
 
-    void                            SetVertices(const MyArray<HalfLifeModelVertex>& vertices);
-    size_t                          GetVerticesCount() const;
-    const HalfLifeModelVertex*      GetVertices() const;
+    void                                SetVertices(const MyArray<HalfLifeModelVertex>& vertices);
+    size_t                              GetVerticesCount() const;
+    const HalfLifeModelVertex*          GetVertices() const;
 
-    void                            SetIndices(const MyArray<uint16_t>& indices);
-    size_t                          GetIndicesCount() const;
-    const uint16_t*                 GetIndices();
+    void                                SetIndices(const MyArray<uint16_t>& indices);
+    size_t                              GetIndicesCount() const;
+    const uint16_t*                     GetIndices();
 
-    void                            AddMesh(const HalfLifeModelStudioMesh& mesh);
-    size_t                          GetMeshesCount() const;
-    const HalfLifeModelStudioMesh&  GetMesh(const size_t idx) const;
+    void                                AddMesh(const HalfLifeModelStudioMesh& mesh);
+    size_t                              GetMeshesCount() const;
+    const HalfLifeModelStudioMesh&      GetMesh(const size_t idx) const;
 
 private:
     CharString                          mName;
@@ -129,4 +175,42 @@ private:
     MyArray<HalfLifeModelVertex>        mVertices;
     MyArray<uint16_t>                   mIndices;
     MyArray<HalfLifeModelStudioMesh>    mMeshes;
+};
+
+class HalfLifeModelSequence {
+public:
+    HalfLifeModelSequence(const size_t numBones);
+    ~HalfLifeModelSequence();
+
+    void                            SetName(const CharString& name);
+    const CharString&               GetName() const;
+    void                            SetFPS(const float fps);
+    float                           GetFPS() const;
+    void                            SetMotionType(const uint32_t motionType);
+    uint32_t                        GetMotionType() const;
+    void                            SetMotionBone(const uint32_t motionBone);
+    uint32_t                        GetMotionBone() const;
+    void                            SetFramesCount(const uint32_t frames);
+    uint32_t                        GetFramesCount() const;
+    void                            SetBounds(const AABBox& bounds);
+    const AABBox&                   GetBounds() const;
+    void                            SetAnimLine(const size_t boneIdx, const HalfLifeAnimLine& animLine);
+    const HalfLifeAnimLine&         GetAnimLine(const size_t boneIdx) const;
+    void                            SetEvents(MyArray<HalfLifeModelAnimEvent>& events);
+    size_t                          GetEventsCount() const;
+    const HalfLifeModelAnimEvent&   GetEvent(const size_t idx) const;
+
+private:
+    CharString                      mName;
+    float                           mFPS;
+    uint32_t                        mMotionType;
+    uint32_t                        mMotionBone;
+    uint32_t                        mNumFrames;
+    AABBox                          mBounds;
+    MyArray<HalfLifeModelAnimEvent> mEvents;
+    MyArray<HalfLifeAnimLine>       mAnimLines;
+};
+
+class HalfLifeModelBoneControllers {
+
 };

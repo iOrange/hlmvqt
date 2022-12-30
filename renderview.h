@@ -1,6 +1,8 @@
 #ifndef RENDERVIEW_H
 #define RENDERVIEW_H
 
+#include <QBasicTimer>
+#include <QDateTime>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions_2_0>
 #include <QOpenGLShaderProgram>
@@ -27,6 +29,11 @@ struct RenderOptions {
     bool showWireframe;
     bool overlayWireframe;
 
+    bool imageViewerMode;
+    int  textureToShow;
+
+    int  animSequence;
+
     void Reset() {
         this->renderTextured = true;
         this->showBones = false;
@@ -35,6 +42,11 @@ struct RenderOptions {
         this->showNormals = false;
         this->showWireframe = false;
         this->overlayWireframe = false;
+
+        this->imageViewerMode = false;
+        this->textureToShow = 0;
+
+        this->animSequence = 0;
     }
 };
 
@@ -52,6 +64,7 @@ protected:
     void                    mousePressEvent(QMouseEvent* event) override;
     void                    mouseMoveEvent(QMouseEvent* event) override;
     void                    wheelEvent(QWheelEvent* event) override;
+    void                    timerEvent(QTimerEvent* event) override;
 
     void                    MakeShader(QOpenGLShaderProgram*& shader, const char* vs, const char* fs);
     void                    UpdateMatrices();
@@ -64,12 +77,15 @@ public:
 
 private:
     QOpenGLContext*                 mGLContext;
+    QBasicTimer                     mTimer;
 
     HalfLifeModel*                  mModel;
     MyArray<RenderVertex>           mRenderVertices;
     MyArray<RefPtr<QOpenGLTexture>> mTextures;
     AABBox                          mModelBounds;
     bool                            mIsFirstFrame;
+    QDateTime                       mLastTime;
+    float                           mAnimationFrame;
 
     QMatrix4x4                      mModelMat;
     QMatrix4x4                      mViewMat;
@@ -83,6 +99,7 @@ private:
     QPoint                          mLastMovePos;
 
     QOpenGLShaderProgram*           mShaderModel;
+    QOpenGLShaderProgram*           mShaderImage;
     StrongPtr<QOpenGLTexture>       mWhiteTexture;
     int                             mIsChromeLocation;
 

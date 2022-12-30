@@ -43,12 +43,41 @@ uniform sampler2D texDiffuse;
 #define saturate(val) clamp((val), 0.0, 1.0)
 #define lerp(valA, valB, factorT) mix((valA), (valB), (factorT))
 
+#define minDiffuse 0.35
+
 void main() {
     vec3 diffuseColor = texture2D(texDiffuse, texCoords.xy).rgb;
     vec3 normal = normalize(normalVec);
     vec3 dirToLight = normalize(lightVec);
     float NdotL = saturate(dot(normal, dirToLight));
-    float diffuseTerm = saturate(NdotL + 0.15);
+    float diffuseTerm = max(minDiffuse, saturate(NdotL));
     gl_FragColor = vec4(lerp(diffuseColor, diffuseColor * diffuseTerm, texCoords.z), 1.0);
 }
 )==";
+
+
+//shaders to draw image
+static const char* g_VS_DrawImage = R"==(
+attribute vec3 inPos;
+attribute vec2 inUV;
+
+uniform mat4 mvp;
+
+varying vec2 texCoords;
+
+void main() {
+    texCoords = inUV;
+    gl_Position = mvp * vec4(inPos, 1.0);
+}
+)==";
+
+static const char* g_FS_DrawImage = R"==(
+varying vec2 texCoords;
+
+uniform sampler2D texDiffuse;
+
+void main() {
+    gl_FragColor = texture2D(texDiffuse, texCoords);
+}
+)==";
+

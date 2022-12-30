@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Half-Life Model Viewer Qt</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -80,7 +80,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tabModel">
         <attribute name="title">
@@ -296,7 +296,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>256</width>
+           <width>481</width>
            <height>170</height>
           </rect>
          </property>
@@ -306,11 +306,29 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="showDropIndicator" stdset="0">
+          <bool>false</bool>
+         </property>
+         <property name="movement">
+          <enum>QListView::Static</enum>
+         </property>
+         <property name="viewMode">
+          <enum>QListView::IconMode</enum>
+         </property>
+         <property name="uniformItemSizes">
+          <bool>true</bool>
+         </property>
+         <property name="selectionRectVisible">
+          <bool>false</bool>
+         </property>
         </widget>
         <widget class="QPushButton" name="btnExportTexture">
          <property name="geometry">
           <rect>
-           <x>280</x>
+           <x>490</x>
            <y>10</y>
            <width>80</width>
            <height>24</height>
@@ -326,7 +344,7 @@
          </property>
          <property name="geometry">
           <rect>
-           <x>280</x>
+           <x>490</x>
            <y>50</y>
            <width>91</width>
            <height>22</height>
@@ -339,7 +357,7 @@
         <widget class="QLabel" name="lblTextureSize">
          <property name="geometry">
           <rect>
-           <x>280</x>
+           <x>490</x>
            <y>80</y>
            <width>111</width>
            <height>16</height>
@@ -354,6 +372,16 @@
         <attribute name="title">
          <string>Sequences</string>
         </attribute>
+        <widget class="QListWidget" name="lstSequences">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>256</width>
+           <height>171</height>
+          </rect>
+         </property>
+        </widget>
        </widget>
       </widget>
      </widget>

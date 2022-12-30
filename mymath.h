@@ -67,8 +67,14 @@ inline float FAbs(const float x) {
 inline float Sin(const float x) {
     return std::sinf(x);
 }
+inline float ASin(const float x) {
+    return std::asinf(x);
+}
 inline float Cos(const float x) {
     return std::cosf(x);
+}
+inline float ACos(const float x) {
+    return std::acosf(x);
 }
 inline float Sqrt(const float x) {
     return std::sqrtf(x);
@@ -462,6 +468,31 @@ struct MYMATH_ALIGN_FOR_SSE quatf {
                      cx * cy * sz - sx * sy * cz,
                      cx * cy * cz + sx * sy * sz);
     }
+
+    // stolen from Doom3 SDK
+    static quatf slerp(const quatf& from, const quatf& to, const float t) {
+        quatf temp;
+        float cosom = from.x * to.x + from.y * to.y + from.z * to.z + from.w * to.w;
+        if (cosom < 0.0f) {
+            temp = -to;
+            cosom = -cosom;
+        } else {
+            temp = to;
+        }
+
+        float scale0, scale1;
+        if ((1.0f - cosom) > 1e-6f) {
+            const float omega = ACos(cosom);
+            const float sinom = 1.0f / Sin(omega);
+            scale0 = Sin((1.0f - t) * omega) * sinom;
+            scale1 = Sin(t * omega) * sinom;
+        } else {
+            scale0 = 1.0f - t;
+            scale1 = t;
+        }
+
+        return (from * scale0) + (temp * scale1);
+    }
 };
 
 // row-major
@@ -684,6 +715,10 @@ struct MYMATH_ALIGN_FOR_SSE mat4f {
 
 struct AABBox {
     vec3f minimum, maximum;
+
+    AABBox() : minimum{}, maximum{} {}
+    AABBox(const AABBox& other) : minimum(other.minimum), maximum(other.maximum) {}
+    AABBox(const vec3f& _minimum, const vec3f& _maximum) : minimum(_minimum), maximum(_maximum) {}
 
     inline bool Valid() const {
         return this->Extent().length() > MM_Epsilon;
