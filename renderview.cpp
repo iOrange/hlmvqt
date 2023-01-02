@@ -22,8 +22,12 @@ RenderView::RenderView(QWidget* parent)
     , mShaderModel(nullptr)
     , mShaderImage(nullptr)
     , mLightPos(250.0f, 250.0f, 1000.0f)
+    , mLightPosLocation(0)
+    , mModelViewLocation(0)
+    , mModelViewProjLocation(0)
     , mIsChromeLocation(0)
     , mForcedColorLocation(0)
+    , mAlphaTestLocation(0)
     , mRenderOptions{}
 {
     mRenderOptions.Reset();
@@ -58,6 +62,9 @@ void RenderView::initializeGL() {
 
     if (mShaderModel) {
         mShaderModel->bind();
+        mLightPosLocation = mShaderModel->uniformLocation("lightPos");
+        mModelViewLocation = mShaderModel->uniformLocation("mv");
+        mModelViewProjLocation = mShaderModel->uniformLocation("mvp");
         mIsChromeLocation = mShaderModel->uniformLocation("isChrome");
         mForcedColorLocation = mShaderModel->uniformLocation("forcedColor");
         mAlphaTestLocation = mShaderModel->uniformLocation("alphaTest");
@@ -108,8 +115,8 @@ void RenderView::paintGL() {
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-            const float tw = scast<float>(texture.orig->width());
-            const float th = scast<float>(texture.orig->height());
+            const float tw = scast<float>(texture.orig->width()) * mRenderOptions.imageZoom;
+            const float th = scast<float>(texture.orig->height()) * mRenderOptions.imageZoom;
             const float tx = (rc.width() - tw) * 0.5f;
             const float ty = (rc.height() - th) * 0.5f;
 
@@ -148,9 +155,9 @@ void RenderView::paintGL() {
             mShaderModel->enableAttributeArray(k_AttribNormal);
             mShaderModel->enableAttributeArray(k_AttribUV);
 
-            mShaderModel->setUniformValue("lightPos", mLightPos.x, mLightPos.y, mLightPos.z);
-            mShaderModel->setUniformValue("mv", mModelView);
-            mShaderModel->setUniformValue("mvp", mModelViewProj);
+            mShaderModel->setUniformValue(mLightPosLocation, mLightPos.x, mLightPos.y, mLightPos.z);
+            mShaderModel->setUniformValue(mModelViewLocation, mModelView);
+            mShaderModel->setUniformValue(mModelViewProjLocation, mModelViewProj);
             mShaderModel->setUniformValue(mForcedColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
 
             bool renderTextured = mRenderOptions.renderTextured;

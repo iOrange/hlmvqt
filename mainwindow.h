@@ -44,6 +44,7 @@ private slots:
     void on_tabBottom_currentChanged(int index);
     void on_lstSequences_currentRowChanged(int currentRow);
     void on_lstEvents_currentRowChanged(int currentRow);
+    void on_spinImageZoom_valueChanged(double value);
 
 private:
     void UpdateUIForModel();

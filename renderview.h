@@ -21,18 +21,19 @@ struct RenderVertex {
 };
 
 struct RenderOptions {
-    bool renderTextured;
-    bool showBones;
-    bool showAttachments;
-    bool showHitBoxes;
-    bool showNormals;
-    bool showWireframe;
-    bool overlayWireframe;
+    bool  renderTextured;
+    bool  showBones;
+    bool  showAttachments;
+    bool  showHitBoxes;
+    bool  showNormals;
+    bool  showWireframe;
+    bool  overlayWireframe;
 
-    bool imageViewerMode;
-    int  textureToShow;
+    bool  imageViewerMode;
+    int   textureToShow;
+    float imageZoom;
 
-    int  animSequence;
+    int   animSequence;
 
     void Reset() {
         this->renderTextured = true;
@@ -45,6 +46,7 @@ struct RenderOptions {
 
         this->imageViewerMode = false;
         this->textureToShow = 0;
+        this->imageZoom = 1.0f;
 
         this->animSequence = 0;
     }
@@ -104,6 +106,9 @@ private:
     QOpenGLShaderProgram*           mShaderModel;
     QOpenGLShaderProgram*           mShaderImage;
     StrongPtr<QOpenGLTexture>       mWhiteTexture;
+    int                             mLightPosLocation;
+    int                             mModelViewLocation;
+    int                             mModelViewProjLocation;
     int                             mIsChromeLocation;
     int                             mForcedColorLocation;
     int                             mAlphaTestLocation;

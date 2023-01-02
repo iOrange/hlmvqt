@@ -210,6 +210,7 @@ void MainWindow::UpdateUIForModel() {
             item->setData(Qt::UserRole, scast<int>(i));
             ui->lstTextures->addItem(item);
         }
+        ui->spinImageZoom->setValue(1.0);
 
         // sequences tab
         ui->lstSequences->clear();
@@ -346,6 +347,14 @@ void MainWindow::on_lstEvents_currentRowChanged(int currentRow) {
                 ui->lblEventOptions->setToolTip(ui->lblEventOptions->text());
             }
         }
+    }
+}
+
+void MainWindow::on_spinImageZoom_valueChanged(double value) {
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.imageZoom = scast<float>(value);
+        mRenderView->SetRenderOptions(options);
     }
 }
 
