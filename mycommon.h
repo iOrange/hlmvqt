@@ -16,7 +16,9 @@
 #define rcast reinterpret_cast
 #define scast static_cast
 
+#ifndef DebugAssert
 #define DebugAssert assert
+#endif
 
 namespace fs = std::filesystem;
 

@@ -39,6 +39,8 @@ varying vec3 lightVec;
 varying vec3 texCoords; // z - lighting factor
 
 uniform sampler2D texDiffuse;
+uniform vec4 forcedColor;
+uniform vec4 alphaTest;
 
 #define saturate(val) clamp((val), 0.0, 1.0)
 #define lerp(valA, valB, factorT) mix((valA), (valB), (factorT))
@@ -46,12 +48,16 @@ uniform sampler2D texDiffuse;
 #define minDiffuse 0.35
 
 void main() {
-    vec3 diffuseColor = texture2D(texDiffuse, texCoords.xy).rgb;
+    vec4 diffuseColor = texture2D(texDiffuse, texCoords.xy);
+    if (diffuseColor.a < alphaTest.x) {
+        discard;
+    }
+
     vec3 normal = normalize(normalVec);
     vec3 dirToLight = normalize(lightVec);
     float NdotL = saturate(dot(normal, dirToLight));
     float diffuseTerm = max(minDiffuse, saturate(NdotL));
-    gl_FragColor = vec4(lerp(diffuseColor, diffuseColor * diffuseTerm, texCoords.z), 1.0);
+    gl_FragColor = vec4(lerp(diffuseColor.rgb, diffuseColor.rgb * diffuseTerm, texCoords.z), 1.0) * forcedColor;
 }
 )==";
 

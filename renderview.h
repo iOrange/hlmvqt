@@ -50,6 +50,11 @@ struct RenderOptions {
     }
 };
 
+struct RenderTexture {
+    RefPtr<QOpenGLTexture>  draw;
+    RefPtr<QOpenGLTexture>  orig;   // most of the time is a pointer to `draw`, except when masked
+};
+
 class RenderView : public QOpenGLWidget, protected QOpenGLFunctions_2_0 {
     Q_OBJECT
 
@@ -81,9 +86,7 @@ private:
 
     HalfLifeModel*                  mModel;
     MyArray<RenderVertex>           mRenderVertices;
-    MyArray<RefPtr<QOpenGLTexture>> mTextures;
-    AABBox                          mModelBounds;
-    bool                            mIsFirstFrame;
+    MyArray<RenderTexture>          mTextures;
     QDateTime                       mLastTime;
     float                           mAnimationFrame;
 
@@ -102,6 +105,8 @@ private:
     QOpenGLShaderProgram*           mShaderImage;
     StrongPtr<QOpenGLTexture>       mWhiteTexture;
     int                             mIsChromeLocation;
+    int                             mForcedColorLocation;
+    int                             mAlphaTestLocation;
 
     RenderOptions                   mRenderOptions;
 };

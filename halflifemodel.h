@@ -28,6 +28,8 @@ struct HalfLifeModelTexture {
     uint32_t            width;
     uint32_t            height;
     bool                chrome;
+    bool                additive;
+    bool                masked;
     MyArray<uint8_t>    data;
     MyArray<uint8_t>    palette;
 };
@@ -115,6 +117,10 @@ public:
     void                                CalculateSkeleton(const float frame, const size_t sequenceIdx);
 
 private:
+    void                                LoadSequenceAnim(SequencePtr& sequence, MemStream& stream, const size_t offsetAnim);
+
+private:
+    fs::path                            mSourcePath;
     MyArray<BodyPartPtr>                mBodyParts;
     MyArray<HalfLifeModelTexture>       mTextures;
     MyArray<HalfLifeModelBone>          mBones;
@@ -192,6 +198,8 @@ public:
     uint32_t                        GetMotionBone() const;
     void                            SetFramesCount(const uint32_t frames);
     uint32_t                        GetFramesCount() const;
+    void                            SetSequenceGroup(const uint32_t group);
+    uint32_t                        GetSequenceGroup() const;
     void                            SetBounds(const AABBox& bounds);
     const AABBox&                   GetBounds() const;
     void                            SetAnimLine(const size_t boneIdx, const HalfLifeAnimLine& animLine);
@@ -205,6 +213,7 @@ private:
     float                           mFPS;
     uint32_t                        mMotionType;
     uint32_t                        mMotionBone;
+    uint32_t                        mSequenceGroup;
     uint32_t                        mNumFrames;
     AABBox                          mBounds;
     MyArray<HalfLifeModelAnimEvent> mEvents;

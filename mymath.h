@@ -2,7 +2,9 @@
 #include <cmath>
 #include <cassert>
 
+#ifndef DebugAssert
 #define DebugAssert assert
+#endif
 
 //#define MYMATH_ALIGN_FOR_SSE    alignas(16)
 #define MYMATH_ALIGN_FOR_SSE
@@ -587,6 +589,13 @@ struct MYMATH_ALIGN_FOR_SSE mat4f {
                      vec4f::dot(v4, m[2]));
     }
 
+
+    static mat4f identity() {
+        return mat4f(vec4f(1.0f, 0.0f, 0.0f, 0.0f),
+                     vec4f(0.0f, 1.0f, 0.0f, 0.0f),
+                     vec4f(0.0f, 0.0f, 1.0f, 0.0f),
+                     vec4f(0.0f, 0.0f, 0.0f, 1.0f));
+    }
 
     static mat4f transpose(const mat4f& mat) {
         return mat4f(vec4f(mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0]),

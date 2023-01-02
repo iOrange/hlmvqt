@@ -43,6 +43,7 @@ private slots:
     void on_chkWireframeoverlay_stateChanged(int state);
     void on_tabBottom_currentChanged(int index);
     void on_lstSequences_currentRowChanged(int currentRow);
+    void on_lstEvents_currentRowChanged(int currentRow);
 
 private:
     void UpdateUIForModel();

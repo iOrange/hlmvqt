@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>625</height>
+    <height>643</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -80,7 +80,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tabModel">
         <attribute name="title">
@@ -329,7 +329,7 @@
          <property name="geometry">
           <rect>
            <x>490</x>
-           <y>10</y>
+           <y>20</y>
            <width>80</width>
            <height>24</height>
           </rect>
@@ -358,13 +358,45 @@
          <property name="geometry">
           <rect>
            <x>490</x>
-           <y>80</y>
-           <width>111</width>
+           <y>0</y>
+           <width>171</width>
            <height>16</height>
           </rect>
          </property>
          <property name="text">
           <string>0 x 0 pixels</string>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="chkIsAdditiveTexture">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>490</x>
+           <y>70</y>
+           <width>91</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Is additive</string>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="chkIsMaskedTexture">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>490</x>
+           <y>90</y>
+           <width>91</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Is masked</string>
          </property>
         </widget>
        </widget>
@@ -380,6 +412,133 @@
            <width>256</width>
            <height>171</height>
           </rect>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblSequenceName">
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>20</y>
+           <width>111</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>idle1</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblSequenceFPS">
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>40</y>
+           <width>111</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>15 FPS</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblSequenceFrames">
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>60</y>
+           <width>111</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>31 frames</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblSequenceEvents">
+         <property name="geometry">
+          <rect>
+           <x>270</x>
+           <y>80</y>
+           <width>111</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0 events</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_4">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>0</y>
+           <width>81</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Events list:</string>
+         </property>
+        </widget>
+        <widget class="QListWidget" name="lstEvents">
+         <property name="geometry">
+          <rect>
+           <x>440</x>
+           <y>20</y>
+           <width>161</width>
+           <height>151</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblEventFrame">
+         <property name="geometry">
+          <rect>
+           <x>620</x>
+           <y>20</y>
+           <width>171</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Frame 0</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblEventEvent">
+         <property name="geometry">
+          <rect>
+           <x>620</x>
+           <y>40</y>
+           <width>171</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Event 0</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblEventType">
+         <property name="geometry">
+          <rect>
+           <x>620</x>
+           <y>60</y>
+           <width>171</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Type 0</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="lblEventOptions">
+         <property name="geometry">
+          <rect>
+           <x>620</x>
+           <y>80</y>
+           <width>171</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>-</string>
          </property>
         </widget>
        </widget>

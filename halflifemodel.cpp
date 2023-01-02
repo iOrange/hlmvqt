@@ -28,9 +28,9 @@ struct VertexIndexer {
 
 PACKED_STRUCT_BEGIN
 struct HLVertexCMD {
-    short vertex;
-    short normal;
-    short u, v;
+    int16_t vertex;
+    int16_t normal;
+    int16_t u, v;
 } PACKED_STRUCT_END;
 
 
@@ -101,6 +101,8 @@ bool HalfLifeModel::LoadFromPath(const fs::path& filePath) {
     if (HalfLifeModel::kIDSTMagic != stdhdr.magic || stdhdr.version < 10) {
         return false;
     }
+
+    mSourcePath = filePath;
 
     if (stdhdr.numTextures == 0) {
         // try to load texture model
@@ -181,7 +183,7 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
                     return vec2f(scast<float>(vcmd.u) * invTexWidth, scast<float>(vcmd.v) * invTexHeight);
                 };
 
-                const short* tricmds = rcast<const short*>(stream.Data() + meshHdr.offsetTriangles);
+                const int16_t* tricmds = rcast<const int16_t*>(stream.Data() + meshHdr.offsetTriangles);
                 int numVertices;
                 uint32_t numIndices = 0;
                 while (numVertices = *(tricmds++)) {
@@ -264,10 +266,42 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
             hlbone.scalePos = vec3f(sbone.scale[0], sbone.scale[1], sbone.scale[2]);
             hlbone.scaleRot = vec3f(sbone.scale[3], sbone.scale[4], sbone.scale[5]);
 
-            mat4f& boneMat = mSkeleton[i];
-            //boneMat = mat4f::fromQuatAndPos(hlbone.rot, hlbone.pos);
-            if (hlbone.parentIdx >= 0) {
-                boneMat = mSkeleton[hlbone.parentIdx] * boneMat;
+            mSkeleton[i] = mat4f::identity();
+        }
+    }
+
+    MyArray<MemStream> seqGroupsFiles;
+
+    fs::path sourceFolder = mSourcePath.parent_path();
+    // load sequences groups
+    if (stdhdr.numSeqGroups > 0) {
+        if (stdhdr.numSeqGroups > 1) {
+            seqGroupsFiles.resize(stdhdr.numSeqGroups - 1);
+        }
+
+        mSequenceGroups.resize(stdhdr.numSeqGroups);
+
+        MemStream seqGrpsStream = stream.Substream(scast<size_t>(stdhdr.offsetSeqGroups), stream.Length());
+        for (int i = 0; i < stdhdr.numSeqGroups; ++i) {
+            HalfLifeModelSequenceGroup& seqGrp = mSequenceGroups[i];
+
+            mstudioseqgroup_t hlSeqGrp = {};
+            seqGrpsStream.ReadStruct(hlSeqGrp);
+
+            seqGrp.label = hlSeqGrp.label;
+            seqGrp.name = hlSeqGrp.name;
+            seqGrp.data = hlSeqGrp.data;
+
+            if (i > 0) {
+                fs::path seqGroupFileName = fs::path(seqGrp.name).filename();
+                MemStream seqStream = ReadFileToMemStream(sourceFolder / seqGroupFileName);
+                if (seqStream) {
+                    studiohdr_t seqStdhdr = {};
+                    seqStream.ReadStruct(seqStdhdr);
+                    if (HalfLifeModel::kIDSQMagic == seqStdhdr.magic) {
+                        seqGroupsFiles[i - 1] = seqStream;
+                    }
+                }
             }
         }
     }
@@ -277,7 +311,9 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
         mSequences.resize(stdhdr.numSequences);
 
         MemStream seqStream = stream.Substream(scast<size_t>(stdhdr.offsetSequences), stream.Length());
-        for (SequencePtr& sequence : mSequences) {
+        for (size_t i = 0; i < mSequences.size(); ++i) {
+            SequencePtr& sequence = mSequences[i];
+
             mstudioseqdesc_t seqDesc = {};
             seqStream.ReadStruct(seqDesc);
 
@@ -286,29 +322,15 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
             sequence->SetFPS(seqDesc.fps);
             sequence->SetMotionType(scast<uint32_t>(seqDesc.motionType));
             sequence->SetMotionBone(scast<uint32_t>(seqDesc.motionBone));
+            sequence->SetSequenceGroup(scast<uint32_t>(seqDesc.seqGroup));
             sequence->SetFramesCount(scast<uint32_t>(seqDesc.numFrames));
             sequence->SetBounds(AABBox(seqDesc.bbmin, seqDesc.bbmax));
 
-            MemStream animStream = stream.Substream(scast<size_t>(seqDesc.offsetAnimData), stream.Length());
-            const mstudioanim_t* animPtr = rcast<const mstudioanim_t*>(animStream.GetDataAtCursor());
-
-            for (size_t boneIdx = 0, numBones = mBones.size(); boneIdx < numBones; ++boneIdx, ++animPtr) {
-                const HalfLifeModelBone& bone = mBones[boneIdx];
-
-                HalfLifeAnimLine animLine;
-                animLine.frames.resize(seqDesc.numFrames);
-                for (int frame = 0; frame < seqDesc.numFrames; ++frame) {
-                    HalfLifeAnimFrame& animFrame = animLine.frames[frame];
-
-                    animFrame.offset[0] = DecodeAnimValue(animPtr, frame, 0);
-                    animFrame.offset[1] = DecodeAnimValue(animPtr, frame, 1);
-                    animFrame.offset[2] = DecodeAnimValue(animPtr, frame, 2);
-                    animFrame.rotation[0] = DecodeAnimValue(animPtr, frame, 3);
-                    animFrame.rotation[1] = DecodeAnimValue(animPtr, frame, 4);
-                    animFrame.rotation[2] = DecodeAnimValue(animPtr, frame, 5);
-                }
-
-                sequence->SetAnimLine(boneIdx, animLine);
+            // first sequence group is always built-in it seems
+            if (!seqDesc.seqGroup) {
+                this->LoadSequenceAnim(sequence, stream, scast<size_t>(seqDesc.offsetAnimData + mSequenceGroups[0].data));
+            } else if (seqGroupsFiles[seqDesc.seqGroup - 1]) {
+                this->LoadSequenceAnim(sequence, seqGroupsFiles[seqDesc.seqGroup - 1], scast<size_t>(seqDesc.offsetAnimData));
             }
 
             if (seqDesc.numEvents > 0) {
@@ -327,22 +349,11 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
                 sequence->SetEvents(events);
             }
         }
+    } else {
+        DebugAssert(false);
     }
 
-    // load sequences groups
-    if (stdhdr.numSeqGroups > 0) {
-        mSequenceGroups.resize(stdhdr.numSeqGroups);
-
-        MemStream seqGrpsStream = stream.Substream(scast<size_t>(stdhdr.offsetSeqGroups), stream.Length());
-        for (HalfLifeModelSequenceGroup& seqGrp : mSequenceGroups) {
-            mstudioseqgroup_t hlSeqGrp = {};
-            seqGrpsStream.ReadStruct(hlSeqGrp);
-
-            seqGrp.label = hlSeqGrp.label;
-            seqGrp.name = hlSeqGrp.name;
-            seqGrp.data = hlSeqGrp.data;
-        }
-    }
+    seqGroupsFiles.clear();
 
     // load attachments
     if (stdhdr.numAttachments > 0) {
@@ -364,6 +375,8 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
         }
     }
 
+    mBounds = mSequences[0]->GetBounds();
+
     return true;
 }
 
@@ -380,6 +393,8 @@ void HalfLifeModel::LoadTextures(MemStream& stream, const size_t numTextures, co
         tex.width = scast<uint32_t>(thdr.width);
         tex.height = scast<uint32_t>(thdr.height);
         tex.chrome = (thdr.flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME;
+        tex.additive = (thdr.flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE;
+        tex.masked = (thdr.flags & STUDIO_NF_MASKED) == STUDIO_NF_MASKED;
         tex.data.resize(tex.width * tex.height);
         tex.palette.resize(256 * 3);
 
@@ -449,39 +464,46 @@ void HalfLifeModel::CalculateSkeleton(const float frame, const size_t sequenceId
         const float frameLerp = frame - scast<float>(frameA);
 
         for (size_t boneIdx = 0, numBones = mBones.size(); boneIdx < numBones; ++boneIdx) {
-            const HalfLifeAnimLine& animLine = sequence->GetAnimLine(boneIdx);
-            const HalfLifeAnimFrame& valueA = animLine.frames[frameA];
-            const HalfLifeAnimFrame& valueB = animLine.frames[frameB];
+            vec3f pos;
+            quatf rot;
 
             const HalfLifeModelBone& bone = mBones[boneIdx];
+            const HalfLifeAnimLine& animLine = sequence->GetAnimLine(boneIdx);
+            if (!animLine.frames.empty()) {
+                const HalfLifeAnimFrame& valueA = animLine.frames[frameA];
+                const HalfLifeAnimFrame& valueB = animLine.frames[frameB];
 
-            vec3f offsetA(scast<float>(valueA.offset[0]) * bone.scalePos.x,
-                          scast<float>(valueA.offset[1]) * bone.scalePos.y,
-                          scast<float>(valueA.offset[2]) * bone.scalePos.z);
-            vec3f offsetB(scast<float>(valueB.offset[0]) * bone.scalePos.x,
-                          scast<float>(valueB.offset[1]) * bone.scalePos.y,
-                          scast<float>(valueB.offset[2]) * bone.scalePos.z);
+                vec3f offsetA(scast<float>(valueA.offset[0]) * bone.scalePos.x,
+                              scast<float>(valueA.offset[1]) * bone.scalePos.y,
+                              scast<float>(valueA.offset[2]) * bone.scalePos.z);
+                vec3f offsetB(scast<float>(valueB.offset[0]) * bone.scalePos.x,
+                              scast<float>(valueB.offset[1]) * bone.scalePos.y,
+                              scast<float>(valueB.offset[2]) * bone.scalePos.z);
 
-            vec3f rotationA(scast<float>(valueA.rotation[0]) * bone.scaleRot.x,
-                            scast<float>(valueA.rotation[1]) * bone.scaleRot.y,
-                            scast<float>(valueA.rotation[2]) * bone.scaleRot.z);
-            vec3f rotationB(scast<float>(valueB.rotation[0]) * bone.scaleRot.x,
-                            scast<float>(valueB.rotation[1]) * bone.scaleRot.y,
-                            scast<float>(valueB.rotation[2]) * bone.scaleRot.z);
+                vec3f rotationA(scast<float>(valueA.rotation[0]) * bone.scaleRot.x,
+                                scast<float>(valueA.rotation[1]) * bone.scaleRot.y,
+                                scast<float>(valueA.rotation[2]) * bone.scaleRot.z);
+                vec3f rotationB(scast<float>(valueB.rotation[0]) * bone.scaleRot.x,
+                                scast<float>(valueB.rotation[1]) * bone.scaleRot.y,
+                                scast<float>(valueB.rotation[2]) * bone.scaleRot.z);
 
-            vec3f pos = bone.pos + Lerp(offsetA, offsetB, frameLerp);
-            quatf rot = quatf::slerp(quatf::fromEuler(bone.rot + rotationA), quatf::fromEuler(bone.rot + rotationB), frameLerp);
+                pos = bone.pos + Lerp(offsetA, offsetB, frameLerp);
+                rot = quatf::slerp(quatf::fromEuler(bone.rot + rotationA), quatf::fromEuler(bone.rot + rotationB), frameLerp);
 
-            if (motionBone == boneIdx) {
-                if (motionType & STUDIO_X) {
-                    pos.x = 0.0f;
+                if (motionBone == boneIdx) {
+                    if (motionType & STUDIO_X) {
+                        pos.x = 0.0f;
+                    }
+                    if (motionType & STUDIO_Y) {
+                        pos.y = 0.0f;
+                    }
+                    if (motionType & STUDIO_Z) {
+                        pos.z = 0.0f;
+                    }
                 }
-                if (motionType & STUDIO_Y) {
-                    pos.y = 0.0f;
-                }
-                if (motionType & STUDIO_Z) {
-                    pos.z = 0.0f;
-                }
+            } else {
+                pos = bone.pos;
+                rot = quatf::fromEuler(bone.rot);
             }
 
             mat4f& boneMat = mSkeleton[boneIdx];
@@ -490,6 +512,32 @@ void HalfLifeModel::CalculateSkeleton(const float frame, const size_t sequenceId
                 boneMat = mSkeleton[bone.parentIdx] * boneMat;
             }
         }
+    }
+}
+
+void HalfLifeModel::LoadSequenceAnim(SequencePtr& sequence, MemStream& stream, const size_t offsetAnim) {
+    MemStream animStream = stream.Substream(offsetAnim, stream.Length());
+    const mstudioanim_t* animPtr = rcast<const mstudioanim_t*>(animStream.GetDataAtCursor());
+
+    const uint32_t numFrames = sequence->GetFramesCount();
+
+    for (size_t boneIdx = 0, numBones = mBones.size(); boneIdx < numBones; ++boneIdx, ++animPtr) {
+        const HalfLifeModelBone& bone = mBones[boneIdx];
+
+        HalfLifeAnimLine animLine;
+        animLine.frames.resize(numFrames);
+        for (int frame = 0; frame < scast<int>(numFrames); ++frame) {
+            HalfLifeAnimFrame& animFrame = animLine.frames[frame];
+
+            animFrame.offset[0] = DecodeAnimValue(animPtr, frame, 0);
+            animFrame.offset[1] = DecodeAnimValue(animPtr, frame, 1);
+            animFrame.offset[2] = DecodeAnimValue(animPtr, frame, 2);
+            animFrame.rotation[0] = DecodeAnimValue(animPtr, frame, 3);
+            animFrame.rotation[1] = DecodeAnimValue(animPtr, frame, 4);
+            animFrame.rotation[2] = DecodeAnimValue(animPtr, frame, 5);
+        }
+
+        sequence->SetAnimLine(boneIdx, animLine);
     }
 }
 
@@ -640,6 +688,14 @@ void HalfLifeModelSequence::SetFramesCount(const uint32_t frames) {
 
 uint32_t HalfLifeModelSequence::GetFramesCount() const {
     return mNumFrames;
+}
+
+void HalfLifeModelSequence::SetSequenceGroup(const uint32_t group) {
+    mSequenceGroup = group;
+}
+
+uint32_t HalfLifeModelSequence::GetSequenceGroup() const {
+    return mSequenceGroup;
 }
 
 void HalfLifeModelSequence::SetBounds(const AABBox& bounds) {

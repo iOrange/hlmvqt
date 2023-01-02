@@ -139,8 +139,10 @@ void MainWindow::on_lstTextures_currentItemChanged(QListWidgetItem* current, QLi
     if (mModel && current) {
         const int textureIdx = current->data(Qt::UserRole).toInt();
         const HalfLifeModelTexture& hltexture = mModel->GetTexture(textureIdx);
-        ui->chkIsChromeTexture->setChecked(hltexture.chrome);
         ui->lblTextureSize->setText(QString("%1 x %2 %3").arg(hltexture.width).arg(hltexture.height).arg(tr("pixels")));
+        ui->chkIsChromeTexture->setChecked(hltexture.chrome);
+        ui->chkIsAdditiveTexture->setChecked(hltexture.additive);
+        ui->chkIsMaskedTexture->setChecked(hltexture.masked);
 
         RenderOptions options = mRenderView->GetRenderOptions();
         options.imageViewerMode = true;
@@ -311,6 +313,39 @@ void MainWindow::on_lstSequences_currentRowChanged(int currentRow) {
         RenderOptions options = mRenderView->GetRenderOptions();
         options.animSequence = currentRow;
         mRenderView->SetRenderOptions(options);
+
+        const HalfLifeModelSequence* sequence = mModel->GetSequence(scast<size_t>(currentRow));
+
+        ui->lblSequenceName->setText(QString::fromStdString(sequence->GetName()));
+        ui->lblSequenceFPS->setText(QString("%1 %2").arg(sequence->GetFPS()).arg(tr("FPS")));
+        ui->lblSequenceFrames->setText(QString("%1 %2").arg(sequence->GetFramesCount()).arg(tr("frames")));
+        ui->lblSequenceEvents->setText(QString("%1 %2").arg(sequence->GetEventsCount()).arg(tr("events")));
+
+        ui->lstEvents->clear();
+        if (sequence->GetEventsCount() > 0) {
+            for (size_t i = 0; i < sequence->GetEventsCount(); ++i) {
+                ui->lstEvents->addItem(QString("%1 %2").arg(tr("Event")).arg(i));
+            }
+            ui->lstEvents->setCurrentRow(0);
+        }
+    }
+}
+
+void MainWindow::on_lstEvents_currentRowChanged(int currentRow) {
+    if (mModel && currentRow >= 0) {
+        const int seqIdx = ui->lstSequences->currentRow();
+        if (seqIdx >= 0 && seqIdx < mModel->GetSequencesCount()) {
+            const HalfLifeModelSequence* sequence = mModel->GetSequence(scast<size_t>(seqIdx));
+            if (currentRow < sequence->GetEventsCount()) {
+                const HalfLifeModelAnimEvent& event = sequence->GetEvent(scast<size_t>(currentRow));
+
+                ui->lblEventFrame->setText(QString("%1 %2").arg(tr("Frame")).arg(event.frame));
+                ui->lblEventEvent->setText(QString("%1 %2").arg(tr("Event")).arg(event.event));
+                ui->lblEventType->setText(QString("%1 %2").arg(tr("Type")).arg(event.type));
+                ui->lblEventOptions->setText(event.options.empty() ? tr("No options") : QString::fromStdString(event.options));
+                ui->lblEventOptions->setToolTip(ui->lblEventOptions->text());
+            }
+        }
     }
 }
 
