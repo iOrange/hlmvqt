@@ -240,6 +240,13 @@ void MainWindow::on_chkShowBones_stateChanged(int state) {
     }
 }
 
+void MainWindow::on_chkShowBonesNames_stateChanged(int state) {
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.showBonesNames = (Qt::Checked == state);
+        mRenderView->SetRenderOptions(options);
+    }
+}
 
 void MainWindow::on_chkShowAttachments_stateChanged(int state) {
     if (mModel) {
@@ -249,6 +256,13 @@ void MainWindow::on_chkShowAttachments_stateChanged(int state) {
     }
 }
 
+void MainWindow::on_chkShowAttachmentsNames_stateChanged(int state) {
+    if (mModel) {
+        RenderOptions options = mRenderView->GetRenderOptions();
+        options.showAttachmentsNames = (Qt::Checked == state);
+        mRenderView->SetRenderOptions(options);
+    }
+}
 
 void MainWindow::on_chkShowHitBoxes_stateChanged(int state) {
     if (mModel) {
@@ -258,7 +272,6 @@ void MainWindow::on_chkShowHitBoxes_stateChanged(int state) {
     }
 }
 
-
 void MainWindow::on_chkShowNormals_stateChanged(int state) {
     if (mModel) {
         RenderOptions options = mRenderView->GetRenderOptions();
@@ -266,7 +279,6 @@ void MainWindow::on_chkShowNormals_stateChanged(int state) {
         mRenderView->SetRenderOptions(options);
     }
 }
-
 
 void MainWindow::on_chkWireframeModel_stateChanged(int state) {
     if (mModel) {
@@ -279,7 +291,6 @@ void MainWindow::on_chkWireframeModel_stateChanged(int state) {
         mRenderView->SetRenderOptions(options);
     }
 }
-
 
 void MainWindow::on_chkWireframeoverlay_stateChanged(int state) {
     if (mModel) {
@@ -307,7 +318,6 @@ void MainWindow::on_tabBottom_currentChanged(int index) {
         mRenderView->SetRenderOptions(options);
     }
 }
-
 
 void MainWindow::on_lstSequences_currentRowChanged(int currentRow) {
     if (mModel && currentRow >= 0 && currentRow < mModel->GetSequencesCount()) {
@@ -357,4 +367,3 @@ void MainWindow::on_spinImageZoom_valueChanged(double value) {
         mRenderView->SetRenderOptions(options);
     }
 }
-

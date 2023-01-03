@@ -9,8 +9,12 @@
 enum : int {
     k_AttribPosition = 0,
     k_AttribNormal,
-    k_AttribUV
+    k_AttribUV,
+    k_AttribColor
 };
+
+
+constexpr size_t kMaxDebugDrawVertices = 4096;
 
 
 RenderView::RenderView(QWidget* parent)
@@ -19,8 +23,9 @@ RenderView::RenderView(QWidget* parent)
     , mGLContext(nullptr)
     , mModel(nullptr)
     , mAnimationFrame(0.0f)
-    , mShaderModel(nullptr)
-    , mShaderImage(nullptr)
+    , mShaderModel{}
+    , mShaderImage{}
+    , mShaderDebug{}
     , mLightPos(250.0f, 250.0f, 1000.0f)
     , mLightPosLocation(0)
     , mModelViewLocation(0)
@@ -29,13 +34,14 @@ RenderView::RenderView(QWidget* parent)
     , mForcedColorLocation(0)
     , mAlphaTestLocation(0)
     , mRenderOptions{}
+    , mDebugVerticesCount(0)
 {
     mRenderOptions.Reset();
+
+    mDebugVertices.resize(kMaxDebugDrawVertices);
 }
 
 RenderView::~RenderView() {
-    delete mShaderModel;
-    delete mShaderImage;
     mTextures.clear();
 }
 
@@ -46,19 +52,10 @@ void RenderView::initializeGL() {
 
     glClearColor(40.0f / 255.0f, 113.0f / 255.0f, 134.0f / 255.0f, 0.0f);
     glClearDepth(1.0);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_LINE_SMOOTH);
-    glLineWidth(1);
 
     this->MakeShader(mShaderModel, g_VS_DrawModel, g_FS_DrawModel);
     this->MakeShader(mShaderImage, g_VS_DrawImage, g_FS_DrawImage);
+    this->MakeShader(mShaderDebug, g_VS_DrawDebug, g_FS_DrawDebug);
 
     if (mShaderModel) {
         mShaderModel->bind();
@@ -95,6 +92,17 @@ void RenderView::initializeGL() {
 
 void RenderView::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_LINE_SMOOTH);
+    glLineWidth(1);
 
     if (mModel) {
         if (mRenderOptions.imageViewerMode) {
@@ -240,6 +248,79 @@ void RenderView::paintGL() {
                     }
                 }
             }
+
+            MyArray<std::pair<QString, vec2f>> debugStrings;
+
+            if (mRenderOptions.showBones && mModel->GetBonesCount() > 0) {
+                this->BeginDebugDraw();
+
+                const size_t numBones = mModel->GetBonesCount();
+                constexpr uint32_t colorPoints = 0xFF00D9FF;
+                constexpr uint32_t colorParentPoint = 0xFFFF0000;
+                constexpr uint32_t colorTets = 0xFF3299FF;
+                constexpr float r = 1.0f;
+                for (size_t i = 0; i < numBones; ++i) {
+                    const HalfLifeModelBone& bone = mModel->GetBone(i);
+                    const mat4f& boneTransform = mModel->GetBoneMat(i);
+                    vec3f pos(boneTransform[0][3], boneTransform[1][3], boneTransform[2][3]);
+
+                    this->DebugDrawSphere(pos, r, (bone.parentIdx >= 0) ? colorPoints : colorParentPoint);
+
+                    if (bone.parentIdx >= 0) {
+                        const mat4f& parentTransform = mModel->GetBoneMat(scast<size_t>(bone.parentIdx));
+                        vec3f parentPos(parentTransform[0][3], parentTransform[1][3], parentTransform[2][3]);
+                        this->DebugDrawTetrahedron(parentPos, pos, r, colorTets);
+                    }
+
+                    if (mRenderOptions.showBonesNames) {
+                        QVector4D ap = mModelViewProj * QVector4D(pos.x, pos.y, pos.z, 1.0f);
+                        vec2f ap2 = vec2f(ap.x() / ap.w(), ap.y() / ap.w()) * vec2f(0.5f, -0.5f) + vec2f(0.5f, 0.5f);
+
+                        ap2.x *= scast<float>(this->width());
+                        ap2.y *= scast<float>(this->height());
+                        debugStrings.push_back({ QString::fromStdString(bone.name), ap2 });
+                    }
+                }
+
+                this->EndDebugDraw();
+            }
+
+            if (mRenderOptions.showAttachments && mModel->GetAttachmentsCount() > 0) {
+                this->BeginDebugDraw();
+
+                const size_t numAttachments = mModel->GetAttachmentsCount();
+                constexpr uint32_t colorAttach = 0xFF00FF00;
+                constexpr float r = 1.3f;
+                for (size_t i = 0; i < numAttachments; ++i) {
+                    const HalfLifeModelAttachment& attachment = mModel->GetAttachment(i);
+                    const mat4f& boneTransform = mModel->GetBoneMat(scast<size_t>(attachment.bone));
+                    vec3f pos = boneTransform.transformPos(attachment.origin);
+
+                    this->DebugDrawSphere(pos, r, colorAttach);
+
+                    if (mRenderOptions.showAttachmentsNames && !attachment.name.empty()) {
+                        QVector4D ap = mModelViewProj * QVector4D(pos.x, pos.y, pos.z, 1.0f);
+                        vec2f ap2 = vec2f(ap.x() / ap.w(), ap.y() / ap.w()) * vec2f(0.5f, -0.5f) + vec2f(0.5f, 0.5f);
+
+                        ap2.x *= scast<float>(this->width());
+                        ap2.y *= scast<float>(this->height());
+                        debugStrings.push_back({ QString::fromStdString(attachment.name), ap2 });
+                    }
+                }
+
+                this->EndDebugDraw();
+            }
+
+            if (!debugStrings.empty()) {
+                for (const auto& p : debugStrings) {
+                    QPainter painter;
+                    painter.begin(this);
+
+                    painter.setPen(Qt::cyan);
+                    painter.drawText(Floori(p.second.x), Floori(p.second.y), p.first);
+                    painter.end();
+                }
+            }
         }
     }
 }
@@ -310,20 +391,20 @@ void RenderView::timerEvent(QTimerEvent* event) {
 }
 
 
-void RenderView::MakeShader(QOpenGLShaderProgram*& shader, const char* vs, const char* fs) {
-    shader = new QOpenGLShaderProgram();
+void RenderView::MakeShader(StrongPtr<QOpenGLShaderProgram>& shader, const char* vs, const char* fs) {
+    shader = MakeStrongPtr<QOpenGLShaderProgram>();
     if (shader->addShaderFromSourceCode(QOpenGLShader::Vertex, vs) &&
         shader->addShaderFromSourceCode(QOpenGLShader::Fragment, fs)) {
         shader->bindAttributeLocation("inPos", k_AttribPosition);
         shader->bindAttributeLocation("inNormal", k_AttribNormal);
         shader->bindAttributeLocation("inUV", k_AttribUV);
+        shader->bindAttributeLocation("inColor", k_AttribColor);
         shader->link();
         shader->bind();
         shader->setUniformValue("texDiffuse", 0);
         shader->release();
     } else {
         QString log = shader->log();
-        delete shader;
         shader = nullptr;
     }
 }
@@ -355,6 +436,136 @@ void RenderView::ResetView() {
     }
 
     this->UpdateMatrices();
+}
+
+void RenderView::BeginDebugDraw() {
+    // nothing here just yet
+}
+void RenderView::EndDebugDraw() {
+    this->FlushDebugVertices();
+}
+
+void RenderView::EnsureDebugVertices(const size_t required) {
+    if (mDebugVerticesCount + required >= kMaxDebugDrawVertices) {
+        this->FlushDebugVertices();
+        mDebugVerticesCount = 0;
+    }
+}
+
+void RenderView::FlushDebugVertices() {
+    if (mDebugVerticesCount) {
+        mShaderDebug->bind();
+        mShaderDebug->setUniformValue("mvp", mModelViewProj);
+
+        mShaderDebug->enableAttributeArray(k_AttribPosition);
+        mShaderDebug->enableAttributeArray(k_AttribColor);
+
+        const DebugVertex* vbStart = mDebugVertices.data();
+
+        mShaderDebug->setAttributeArray(k_AttribPosition, &vbStart->pos.x, 3, sizeof(DebugVertex));
+        mShaderDebug->setAttributeArray(k_AttribColor, GL_UNSIGNED_BYTE, &vbStart->color, 4, sizeof(DebugVertex));
+
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_ALWAYS);
+
+        glDrawArrays(GL_LINES, 0, scast<GLsizei>(mDebugVerticesCount));
+
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LEQUAL);
+
+        mShaderDebug->release();
+    }
+
+    mDebugVerticesCount = 0;
+}
+
+void RenderView::DebugDrawLine(const vec3f& pt0, const vec3f& pt1, const uint32_t color) {
+    this->EnsureDebugVertices(2);
+
+    DebugVertex* vbStart = &mDebugVertices[mDebugVerticesCount];
+    vbStart[0] = { pt0, color };
+    vbStart[1] = { pt1, color };
+
+    mDebugVerticesCount += 2;
+}
+
+void RenderView::DebugDrawRing(const vec3f& origin, const vec3f& majorAxis, const vec3f& minorAxis, const uint32_t color) {
+    constexpr size_t kNumRingSegments = 32;
+    constexpr size_t kNumRingVertices = kNumRingSegments * 2;
+
+    this->EnsureDebugVertices(kNumRingVertices);
+
+    DebugVertex* vbStart = &mDebugVertices[mDebugVerticesCount];
+    size_t vbOffset = 0;
+
+    constexpr float angleDelta = MM_TwoPi / scast<float>(kNumRingSegments);
+    // Instead of calling cos/sin for each segment we calculate
+    // the sign of the angle delta and then incrementally calculate sin
+    // and cosine from then on.
+    float cosDelta = Cos(angleDelta);
+    float sinDelta = Sin(angleDelta);
+    float incrementalSin = 0.0f;
+    float incrementalCos = 1.0f;
+
+    vec3f firstPoint = majorAxis + origin;
+    vec3f prevPoint = firstPoint;
+
+    for (size_t i = 1; i < kNumRingSegments; ++i) {
+        const float newCos = incrementalCos * cosDelta - incrementalSin * sinDelta;
+        const float newSin = incrementalCos * sinDelta + incrementalSin * cosDelta;
+        incrementalCos = newCos;
+        incrementalSin = newSin;
+
+        vec3f point = (majorAxis * incrementalCos + origin) + (minorAxis * incrementalSin);
+
+        vbStart[vbOffset++] = { prevPoint, color };
+        vbStart[vbOffset++] = { point, color };
+
+        prevPoint = point;
+    }
+
+    vbStart[vbOffset++] = { prevPoint, color };
+    vbStart[vbOffset++] = { firstPoint, color };
+
+    mDebugVerticesCount += kNumRingVertices;
+}
+
+void RenderView::DebugDrawSphere(const vec3f& center, const float radius, const uint32_t color) {
+    const vec3f xaxis = vec3f(radius, 0.0f, 0.0f);
+    const vec3f yaxis = vec3f(0.0f, radius, 0.0f);
+    const vec3f zaxis = vec3f(0.0f, 0.0f, radius);
+
+    this->DebugDrawRing(center, xaxis, zaxis, color);
+    this->DebugDrawRing(center, xaxis, yaxis, color);
+    this->DebugDrawRing(center, yaxis, zaxis, color);
+}
+
+void RenderView::DebugDrawTetrahedron(const vec3f& a, const vec3f& b, const float r, const uint32_t color) {
+    constexpr size_t kNumTetrahedronLines = 6;
+    constexpr size_t kNumTetrahedronVertices = kNumTetrahedronLines * 2;
+
+    this->EnsureDebugVertices(kNumTetrahedronVertices);
+
+    vec3f dir = vec3f::normalize(b - a);
+    vec3f axisX, axisZ;
+    OrthonormalBasis(dir, axisX, axisZ);
+
+    const vec3f p0 = a - vec3f(axisX * r + axisZ * r);
+    const vec3f p1 = a + vec3f(axisX * r + (-axisZ * r));
+    const vec3f p2 = a + vec3f(axisZ * r);
+
+    DebugVertex* vbStart = &mDebugVertices[mDebugVerticesCount];
+
+    // base
+    vbStart[ 0] = { p0, color }; vbStart[ 1] = { p1, color };
+    vbStart[ 2] = { p1, color }; vbStart[ 3] = { p2, color };
+    vbStart[ 4] = { p2, color }; vbStart[ 5] = { p0, color };
+    // top
+    vbStart[ 6] = { p0, color }; vbStart[ 7] = { b, color };
+    vbStart[ 8] = { p1, color }; vbStart[ 9] = { b, color };
+    vbStart[10] = { p2, color }; vbStart[11] = { b, color };
+
+    mDebugVerticesCount += kNumTetrahedronVertices;
 }
 
 void RenderView::SetModel(HalfLifeModel* mdl) {

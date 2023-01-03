@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Half-Life Model Viewer Qt</string>
+   <string>Half-Life Model Viewer [Qt]</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -80,7 +80,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tabModel">
         <attribute name="title">
@@ -91,7 +91,7 @@
           <rect>
            <x>10</x>
            <y>10</y>
-           <width>151</width>
+           <width>181</width>
            <height>22</height>
           </rect>
          </property>
@@ -104,7 +104,7 @@
           <rect>
            <x>10</x>
            <y>30</y>
-           <width>151</width>
+           <width>181</width>
            <height>22</height>
           </rect>
          </property>
@@ -115,9 +115,9 @@
         <widget class="QCheckBox" name="chkShowAttachments">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>50</y>
-           <width>151</width>
+           <x>210</x>
+           <y>10</y>
+           <width>211</width>
            <height>22</height>
           </rect>
          </property>
@@ -130,7 +130,7 @@
           <rect>
            <x>10</x>
            <y>80</y>
-           <width>161</width>
+           <width>191</width>
            <height>81</height>
           </rect>
          </property>
@@ -142,7 +142,7 @@
            <rect>
             <x>10</x>
             <y>30</y>
-            <width>141</width>
+            <width>171</width>
             <height>22</height>
            </rect>
           </property>
@@ -155,7 +155,7 @@
            <rect>
             <x>10</x>
             <y>50</y>
-            <width>141</width>
+            <width>171</width>
             <height>22</height>
            </rect>
           </property>
@@ -167,9 +167,9 @@
         <widget class="QCheckBox" name="chkShowHitBoxes">
          <property name="geometry">
           <rect>
-           <x>230</x>
-           <y>10</y>
-           <width>171</width>
+           <x>210</x>
+           <y>50</y>
+           <width>211</width>
            <height>22</height>
           </rect>
          </property>
@@ -180,9 +180,9 @@
         <widget class="QCheckBox" name="chkShowNormals">
          <property name="geometry">
           <rect>
-           <x>230</x>
-           <y>30</y>
-           <width>171</width>
+           <x>210</x>
+           <y>70</y>
+           <width>211</width>
            <height>22</height>
           </rect>
          </property>
@@ -281,6 +281,32 @@
           </property>
          </widget>
         </widget>
+        <widget class="QCheckBox" name="chkShowBonesNames">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>50</y>
+           <width>181</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Show bones names</string>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="chkShowAttachmentsNames">
+         <property name="geometry">
+          <rect>
+           <x>210</x>
+           <y>30</y>
+           <width>211</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Show attachments names</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QWidget" name="tabBody">
         <attribute name="title">
@@ -330,7 +356,7 @@
           <rect>
            <x>490</x>
            <y>20</y>
-           <width>80</width>
+           <width>91</width>
            <height>24</height>
           </rect>
          </property>
@@ -346,7 +372,7 @@
           <rect>
            <x>490</x>
            <y>50</y>
-           <width>91</width>
+           <width>121</width>
            <height>22</height>
           </rect>
          </property>
@@ -375,7 +401,7 @@
           <rect>
            <x>490</x>
            <y>70</y>
-           <width>91</width>
+           <width>121</width>
            <height>22</height>
           </rect>
          </property>
@@ -391,7 +417,7 @@
           <rect>
            <x>490</x>
            <y>90</y>
-           <width>91</width>
+           <width>121</width>
            <height>22</height>
           </rect>
          </property>
@@ -594,7 +620,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>38</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">

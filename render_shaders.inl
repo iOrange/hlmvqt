@@ -87,3 +87,27 @@ void main() {
 }
 )==";
 
+
+//shaders to draw debug lines
+static const char* g_VS_DrawDebug = R"==(
+attribute vec3 inPos;
+attribute vec4 inColor;
+
+uniform mat4 mvp;
+
+varying vec4 varColor;
+
+void main() {
+    varColor = inColor;
+    gl_Position = mvp * vec4(inPos, 1.0);
+}
+)==";
+
+static const char* g_FS_DrawDebug = R"==(
+varying vec4 varColor;
+
+void main() {
+    gl_FragColor = varColor;
+}
+)==";
+

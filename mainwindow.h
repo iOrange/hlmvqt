@@ -36,7 +36,9 @@ private slots:
     void on_btnExportTexture_clicked();
     void on_chkRenderTextured_stateChanged(int state);
     void on_chkShowBones_stateChanged(int state);
+    void on_chkShowBonesNames_stateChanged(int state);
     void on_chkShowAttachments_stateChanged(int state);
+    void on_chkShowAttachmentsNames_stateChanged(int state);
     void on_chkShowHitBoxes_stateChanged(int state);
     void on_chkShowNormals_stateChanged(int state);
     void on_chkWireframeModel_stateChanged(int state);

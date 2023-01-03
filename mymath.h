@@ -766,3 +766,14 @@ struct AABBox {
                         Max3(std::fabsf(maximum.x), std::fabsf(maximum.y), std::fabsf(maximum.z)));
     }
 };
+
+
+// http://jcgt.org/published/0006/01/01/
+// branchlessONB
+inline void OrthonormalBasis(const vec3f& n, vec3f& b1, vec3f& b2) {
+    const float sign = std::copysignf(1.0f, n.z);
+    const float a = -1.0f / (sign + n.z);
+    const float b = n.x * n.y * a;
+    b1 = vec3f(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
+    b2 = vec3f(b, sign + n.y * n.y * a, -n.y);
+}
