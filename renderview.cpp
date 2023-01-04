@@ -170,19 +170,41 @@ void RenderView::paintGL() {
             mShaderModel->setUniformValue(mForcedColorLocation, 1.0f, 1.0f, 1.0f, 1.0f);
 
             bool renderTextured = mRenderOptions.renderTextured;
-            const size_t numCycles = mRenderOptions.overlayWireframe ? 2 : 1;
-            for (size_t drawCycle = 0; drawCycle < numCycles; ++drawCycle) {
-                glDisable(GL_POLYGON_OFFSET_FILL);
+            
+            constexpr size_t kCycleDraw = 0;
+            constexpr size_t kCycleWireframeOverlay = 1;
+            constexpr size_t kCycleNormals = 2;
 
-                if (mRenderOptions.showWireframe || drawCycle > 0) {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                    renderTextured = false;
-                    if (drawCycle > 0) {
-                        glEnable(GL_POLYGON_OFFSET_FILL);
-                        glPolygonOffset(1.0f, 0.1f);
+            size_t cyclesArray[3] = { kCycleDraw };
+
+            size_t numCycles = 1;
+            if (mRenderOptions.overlayWireframe) {
+                cyclesArray[numCycles] = kCycleWireframeOverlay;
+                numCycles++;
+            }
+            if (mRenderOptions.showNormals) {
+                cyclesArray[numCycles] = kCycleNormals;
+                numCycles++;
+            }
+
+            for (size_t cycleIdx = 0; cycleIdx < numCycles; ++cycleIdx) {
+                const size_t drawCycle = cyclesArray[cycleIdx];
+
+                if (drawCycle < kCycleNormals) {
+                    glDisable(GL_POLYGON_OFFSET_FILL);
+
+                    if (mRenderOptions.showWireframe || drawCycle == kCycleWireframeOverlay) {
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                        renderTextured = false;
+                        if (drawCycle == kCycleWireframeOverlay) {
+                            glEnable(GL_POLYGON_OFFSET_FILL);
+                            glPolygonOffset(1.0f, 0.1f);
+                        }
+                    } else {
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                     }
                 } else {
-                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                    this->BeginDebugDraw(true);
                 }
 
                 const size_t numBodyParts = mModel->GetBodyPartsCount();
@@ -196,6 +218,10 @@ void RenderView::paintGL() {
                         const uint16_t* indices = smdl->GetIndices();
                         const HalfLifeModelVertex* srcVertices = smdl->GetVertices();
 
+                        const vec3f* posPtr = nullptr;
+                        const vec3f* normalsPtr = nullptr;
+                        size_t vertexSize = 0;
+
                         if (mModel->GetBonesCount() > 0) {
                             const size_t numVertices = smdl->GetVerticesCount();
                             mRenderVertices.resize(numVertices);
@@ -207,46 +233,75 @@ void RenderView::paintGL() {
                                 renderVertices[k].uv = srcVertices[k].uv;
                             }
 
-                            mShaderModel->setAttributeArray(k_AttribPosition, &renderVertices->pos.x, 3, sizeof(RenderVertex));
-                            mShaderModel->setAttributeArray(k_AttribNormal, &renderVertices->normal.x, 3, sizeof(RenderVertex));
-                            mShaderModel->setAttributeArray(k_AttribUV, &renderVertices->uv.x, 2, sizeof(RenderVertex));
+                            if (drawCycle == kCycleNormals) {
+                                posPtr = &renderVertices->pos;
+                                normalsPtr = &renderVertices->normal;
+                                vertexSize = sizeof(RenderVertex);
+                            } else {
+                                mShaderModel->setAttributeArray(k_AttribPosition, &renderVertices->pos.x, 3, sizeof(RenderVertex));
+                                mShaderModel->setAttributeArray(k_AttribNormal, &renderVertices->normal.x, 3, sizeof(RenderVertex));
+                                mShaderModel->setAttributeArray(k_AttribUV, &renderVertices->uv.x, 2, sizeof(RenderVertex));
+                            }
                         } else {
-                            mShaderModel->setAttributeArray(k_AttribPosition, &srcVertices->pos.x, 3, sizeof(HalfLifeModelVertex));
-                            mShaderModel->setAttributeArray(k_AttribNormal, &srcVertices->normal.x, 3, sizeof(HalfLifeModelVertex));
-                            mShaderModel->setAttributeArray(k_AttribUV, &srcVertices->uv.x, 2, sizeof(HalfLifeModelVertex));
+                            if (drawCycle == kCycleNormals) {
+                                posPtr = &srcVertices->pos;
+                                normalsPtr = &srcVertices->normal;
+                                vertexSize = sizeof(HalfLifeModelVertex);
+                            } else {
+                                mShaderModel->setAttributeArray(k_AttribPosition, &srcVertices->pos.x, 3, sizeof(HalfLifeModelVertex));
+                                mShaderModel->setAttributeArray(k_AttribNormal, &srcVertices->normal.x, 3, sizeof(HalfLifeModelVertex));
+                                mShaderModel->setAttributeArray(k_AttribUV, &srcVertices->uv.x, 2, sizeof(HalfLifeModelVertex));
+                            }
                         }
 
-                        const size_t numMeshes = smdl->GetMeshesCount();
-                        for (size_t k = 0; k < numMeshes; ++k) {
-                            const HalfLifeModelStudioMesh& mesh = smdl->GetMesh(k);
-                            if (mesh.textureIndex < mTextures.size()) {
-                                if (renderTextured) {
-                                    mTextures[mesh.textureIndex].draw->bind();
+                        if (drawCycle < kCycleNormals) {
+                            const size_t numMeshes = smdl->GetMeshesCount();
+                            for (size_t k = 0; k < numMeshes; ++k) {
+                                const HalfLifeModelStudioMesh& mesh = smdl->GetMesh(k);
+                                if (mesh.textureIndex < mTextures.size()) {
+                                    if (renderTextured) {
+                                        mTextures[mesh.textureIndex].draw->bind();
+                                    } else {
+                                        mWhiteTexture->bind();
+                                    }
+
+                                    const HalfLifeModelTexture& hltexture = mModel->GetTexture(mesh.textureIndex);
+                                    mShaderModel->setUniformValue(mIsChromeLocation, hltexture.chrome);
+                                    if (renderTextured && hltexture.masked) {
+                                        mShaderModel->setUniformValue(mAlphaTestLocation, 0.5f, 0.5f, 0.5f, 0.5f);
+                                    } else {
+                                        mShaderModel->setUniformValue(mAlphaTestLocation, -1.0f, -1.0f, -1.0f, -1.0f);
+                                    }
                                 } else {
                                     mWhiteTexture->bind();
-                                }
-
-                                const HalfLifeModelTexture& hltexture = mModel->GetTexture(mesh.textureIndex);
-                                mShaderModel->setUniformValue(mIsChromeLocation, hltexture.chrome);
-                                if (renderTextured && hltexture.masked) {
-                                    mShaderModel->setUniformValue(mAlphaTestLocation, 0.5f, 0.5f, 0.5f, 0.5f);
-                                } else {
+                                    mShaderModel->setUniformValue(mIsChromeLocation, false);
                                     mShaderModel->setUniformValue(mAlphaTestLocation, -1.0f, -1.0f, -1.0f, -1.0f);
                                 }
-                            } else {
-                                mWhiteTexture->bind();
-                                mShaderModel->setUniformValue(mIsChromeLocation, false);
-                                mShaderModel->setUniformValue(mAlphaTestLocation, -1.0f, -1.0f, -1.0f, -1.0f);
-                            }
 
-                            if (drawCycle > 0) {
-                                mShaderModel->setUniformValue(mIsChromeLocation, true);
-                                mShaderModel->setUniformValue(mForcedColorLocation, 1.0f, 0.0f, 0.95f, 1.0f);
-                            }
+                                if (drawCycle == kCycleWireframeOverlay) {
+                                    mShaderModel->setUniformValue(mIsChromeLocation, true);
+                                    mShaderModel->setUniformValue(mForcedColorLocation, 1.0f, 0.0f, 0.95f, 1.0f);
+                                }
 
-                            glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                                glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                            }
+                        } else {
+                            constexpr uint32_t normalsColor = 0xFFFF0000;
+                            constexpr float r = 1.0f;
+
+                            const size_t numVertices = smdl->GetVerticesCount();
+                            for (size_t idx = 0; idx < numVertices; ++idx) {
+                                const vec3f& pos = *rcast<const vec3f*>(rcast<const char*>(posPtr) + idx * vertexSize);
+                                const vec3f& normal = *rcast<const vec3f*>(rcast<const char*>(normalsPtr) + idx * vertexSize);
+
+                                this->DebugDrawLine(pos, pos + (normal * r), normalsColor);
+                            }
                         }
                     }
+                }
+
+                if (drawCycle == kCycleNormals) {
+                    this->EndDebugDraw();
                 }
             }
 

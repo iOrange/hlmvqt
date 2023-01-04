@@ -194,7 +194,15 @@ void MainWindow::UpdateUIForModel() {
         RenderOptions options;
         options.Reset();
         mRenderView->SetRenderOptions(options);
-        ui->chkRenderTextured->setChecked(true);
+        ui->chkRenderTextured->setChecked(options.renderTextured);
+        ui->chkShowBones->setChecked(options.showBones);
+        ui->chkShowBonesNames->setChecked(options.showBonesNames);
+        ui->chkShowAttachments->setChecked(options.showAttachments);
+        ui->chkShowAttachmentsNames->setChecked(options.showAttachmentsNames);
+        ui->chkShowHitBoxes->setChecked(options.showHitBoxes);
+        ui->chkShowNormals->setChecked(options.showNormals);
+        ui->chkWireframeModel->setChecked(options.showWireframe);
+        ui->chkWireframeoverlay->setChecked(options.overlayWireframe);
 
         // textures tab
         ui->lstTextures->clear();
