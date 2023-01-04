@@ -230,6 +230,7 @@ void MainWindow::UpdateUIForModel() {
 
             QListWidgetItem* item = new QListWidgetItem();
             item->setText(QString::fromStdString(hltexture.name));
+            item->setToolTip(item->text());
             item->setIcon(QIcon(QPixmap::fromImage(img)));
             item->setData(Qt::UserRole, scast<int>(i));
             ui->lstTextures->addItem(item);

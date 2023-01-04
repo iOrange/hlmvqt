@@ -346,6 +346,7 @@ void RenderView::paintGL() {
 
                 const size_t numAttachments = mModel->GetAttachmentsCount();
                 constexpr uint32_t colorAttach = 0xFF00FF00;
+                constexpr uint32_t colorLine = 0xFFFCF2FF;
                 constexpr float r = 1.3f;
                 for (size_t i = 0; i < numAttachments; ++i) {
                     const HalfLifeModelAttachment& attachment = mModel->GetAttachment(i);
@@ -353,6 +354,10 @@ void RenderView::paintGL() {
                     vec3f pos = boneTransform.transformPos(attachment.origin);
 
                     this->DebugDrawSphere(pos, r, colorAttach);
+                    for (size_t j = 0; j < 3; ++j) {
+                        vec3f pt = boneTransform.transformPos(attachment.vectors[i]);
+                        this->DebugDrawLine(pos, pt, colorLine);
+                    }
 
                     if (mRenderOptions.showAttachmentsNames && !attachment.name.empty()) {
                         QVector4D ap = mModelViewProj * QVector4D(pos.x, pos.y, pos.z, 1.0f);
@@ -705,6 +710,7 @@ void RenderView::SetModel(HalfLifeModel* mdl) {
 
                     gltexture = MakeRefPtr<QOpenGLTexture>(QOpenGLTexture::Target2D);
                     gltexture->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+                    gltexture->setWrapMode(hltexture.chrome ? QOpenGLTexture::Repeat : QOpenGLTexture::ClampToEdge);
                     if (gltexture->create()) {
                         gltexture->setSize(scast<int>(hltexture.width), scast<int>(hltexture.height));
                         gltexture->setFormat(QOpenGLTexture::RGBA8_UNorm);
