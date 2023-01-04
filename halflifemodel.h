@@ -71,13 +71,19 @@ struct HalfLifeModelSequenceGroup {
     int32_t     data;
 };
 
-struct HalfLifeAnimFrame {
+struct HalfLifeModelAnimFrame {
     int16_t offset[3];
     int16_t rotation[3];
 };
 
-struct HalfLifeAnimLine {
-    MyArray<HalfLifeAnimFrame>  frames;
+struct HalfLifeModelAnimLine {
+    MyArray<HalfLifeModelAnimFrame> frames;
+};
+
+struct HalfLifeModelHitBox {
+    uint32_t    boneIdx;
+    uint32_t    hitGroup;
+    AABBox      bounds;
 };
 
 class HalfLifeModel {
@@ -114,6 +120,9 @@ public:
     size_t                              GetAttachmentsCount() const;
     const HalfLifeModelAttachment&      GetAttachment(const size_t idx) const;
 
+    size_t                              GetHitBoxesCount() const;
+    const HalfLifeModelHitBox&          GetHitBox(const size_t idx) const;
+
     void                                CalculateSkeleton(const float frame, const size_t sequenceIdx);
 
 private:
@@ -129,6 +138,7 @@ private:
     MyArray<SequencePtr>                mSequences;
     MyArray<HalfLifeModelSequenceGroup> mSequenceGroups;
     MyArray<HalfLifeModelAttachment>    mAttachments;
+    MyArray<HalfLifeModelHitBox>        mHitBoxes;
 };
 
 class HalfLifeModelBodypart {
@@ -202,8 +212,8 @@ public:
     uint32_t                        GetSequenceGroup() const;
     void                            SetBounds(const AABBox& bounds);
     const AABBox&                   GetBounds() const;
-    void                            SetAnimLine(const size_t boneIdx, const HalfLifeAnimLine& animLine);
-    const HalfLifeAnimLine&         GetAnimLine(const size_t boneIdx) const;
+    void                            SetAnimLine(const size_t boneIdx, const HalfLifeModelAnimLine& animLine);
+    const HalfLifeModelAnimLine&    GetAnimLine(const size_t boneIdx) const;
     void                            SetEvents(MyArray<HalfLifeModelAnimEvent>& events);
     size_t                          GetEventsCount() const;
     const HalfLifeModelAnimEvent&   GetEvent(const size_t idx) const;
@@ -217,7 +227,7 @@ private:
     uint32_t                        mNumFrames;
     AABBox                          mBounds;
     MyArray<HalfLifeModelAnimEvent> mEvents;
-    MyArray<HalfLifeAnimLine>       mAnimLines;
+    MyArray<HalfLifeModelAnimLine>  mAnimLines;
 };
 
 class HalfLifeModelBoneControllers {

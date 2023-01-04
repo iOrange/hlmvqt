@@ -37,8 +37,8 @@ struct studiohdr_t {
     int     numbonecontrollers; // bone controllers
     int     offsetbonecontroller;
 
-    int     numhitboxes;        // complex bounding boxes
-    int     offsethitbox;
+    int     numHitBoxes;        // complex bounding boxes
+    int     offsetHitBoxes;
 
     int     numSequences;
     int     offsetSequences;

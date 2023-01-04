@@ -96,6 +96,7 @@ protected:
     void                    DebugDrawRing(const vec3f& origin, const vec3f& majorAxis, const vec3f& minorAxis, const uint32_t color);
     void                    DebugDrawSphere(const vec3f& center, const float radius, const uint32_t color);
     void                    DebugDrawTetrahedron(const vec3f& a, const vec3f& b, const float r, const uint32_t color);
+    void                    DebugDrawTransformedBBox(const mat4f& xform, const AABBox& bbox, const uint32_t color);
 
 public:
     void                    SetModel(HalfLifeModel* mdl);

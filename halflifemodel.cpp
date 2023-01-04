@@ -375,6 +375,23 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
         }
     }
 
+    // load hitboxes
+    if (stdhdr.numHitBoxes > 0) {
+        mHitBoxes.resize(stdhdr.numHitBoxes);
+
+        MemStream hbStream = stream.Substream(scast<size_t>(stdhdr.offsetHitBoxes), stream.Length());
+        for (int i = 0; i < stdhdr.numHitBoxes; ++i) {
+            mstudiobbox_t hlhitbox = {};
+            hbStream.ReadStruct(hlhitbox);
+
+            HalfLifeModelHitBox& hitbox = mHitBoxes[i];
+            hitbox.boneIdx = scast<uint32_t>(hlhitbox.bone);
+            hitbox.hitGroup = scast<uint32_t>(hlhitbox.group);
+            hitbox.bounds.minimum = hlhitbox.bbmin;
+            hitbox.bounds.maximum = hlhitbox.bbmax;
+        }
+    }
+
     mBounds = mSequences[0]->GetBounds();
 
     return true;
@@ -452,6 +469,14 @@ const HalfLifeModelAttachment& HalfLifeModel::GetAttachment(const size_t idx) co
     return mAttachments[idx];
 }
 
+size_t HalfLifeModel::GetHitBoxesCount() const {
+    return mHitBoxes.size();
+}
+
+const HalfLifeModelHitBox& HalfLifeModel::GetHitBox(const size_t idx) const {
+    return mHitBoxes[idx];
+}
+
 void HalfLifeModel::CalculateSkeleton(const float frame, const size_t sequenceIdx) {
     if (!mBones.empty() && !mSequences.empty()) {
         const SequencePtr& sequence = mSequences[sequenceIdx];
@@ -468,10 +493,10 @@ void HalfLifeModel::CalculateSkeleton(const float frame, const size_t sequenceId
             quatf rot;
 
             const HalfLifeModelBone& bone = mBones[boneIdx];
-            const HalfLifeAnimLine& animLine = sequence->GetAnimLine(boneIdx);
+            const HalfLifeModelAnimLine& animLine = sequence->GetAnimLine(boneIdx);
             if (!animLine.frames.empty()) {
-                const HalfLifeAnimFrame& valueA = animLine.frames[frameA];
-                const HalfLifeAnimFrame& valueB = animLine.frames[frameB];
+                const HalfLifeModelAnimFrame& valueA = animLine.frames[frameA];
+                const HalfLifeModelAnimFrame& valueB = animLine.frames[frameB];
 
                 vec3f offsetA(scast<float>(valueA.offset[0]) * bone.scalePos.x,
                               scast<float>(valueA.offset[1]) * bone.scalePos.y,
@@ -524,10 +549,10 @@ void HalfLifeModel::LoadSequenceAnim(SequencePtr& sequence, MemStream& stream, c
     for (size_t boneIdx = 0, numBones = mBones.size(); boneIdx < numBones; ++boneIdx, ++animPtr) {
         const HalfLifeModelBone& bone = mBones[boneIdx];
 
-        HalfLifeAnimLine animLine;
+        HalfLifeModelAnimLine animLine;
         animLine.frames.resize(numFrames);
         for (int frame = 0; frame < scast<int>(numFrames); ++frame) {
-            HalfLifeAnimFrame& animFrame = animLine.frames[frame];
+            HalfLifeModelAnimFrame& animFrame = animLine.frames[frame];
 
             animFrame.offset[0] = DecodeAnimValue(animPtr, frame, 0);
             animFrame.offset[1] = DecodeAnimValue(animPtr, frame, 1);
@@ -706,11 +731,11 @@ const AABBox& HalfLifeModelSequence::GetBounds() const {
     return mBounds;
 }
 
-void HalfLifeModelSequence::SetAnimLine(const size_t boneIdx, const HalfLifeAnimLine& animLine) {
+void HalfLifeModelSequence::SetAnimLine(const size_t boneIdx, const HalfLifeModelAnimLine& animLine) {
     mAnimLines[boneIdx] = animLine;
 }
 
-const HalfLifeAnimLine& HalfLifeModelSequence::GetAnimLine(const size_t boneIdx) const {
+const HalfLifeModelAnimLine& HalfLifeModelSequence::GetAnimLine(const size_t boneIdx) const {
     return mAnimLines[boneIdx];
 }
 

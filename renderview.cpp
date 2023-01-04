@@ -311,6 +311,21 @@ void RenderView::paintGL() {
                 this->EndDebugDraw();
             }
 
+            if (mRenderOptions.showHitBoxes && mModel->GetHitBoxesCount() > 0) {
+                this->BeginDebugDraw();
+
+                const size_t numHitBoxes = mModel->GetHitBoxesCount();
+                constexpr uint32_t colorBox = 0xFF0000FF;
+                for (size_t i = 0; i < numHitBoxes; ++i) {
+                    const HalfLifeModelHitBox& hitbox = mModel->GetHitBox(i);
+                    const mat4f& boneTransform = mModel->GetBoneMat(hitbox.boneIdx);
+
+                    this->DebugDrawTransformedBBox(boneTransform, hitbox.bounds, colorBox);
+                }
+
+                this->EndDebugDraw();
+            }
+
             if (!debugStrings.empty()) {
                 for (const auto& p : debugStrings) {
                     QPainter painter;
@@ -566,6 +581,41 @@ void RenderView::DebugDrawTetrahedron(const vec3f& a, const vec3f& b, const floa
     vbStart[10] = { p2, color }; vbStart[11] = { b, color };
 
     mDebugVerticesCount += kNumTetrahedronVertices;
+}
+
+void RenderView::DebugDrawTransformedBBox(const mat4f& xform, const AABBox& bbox, const uint32_t color) {
+    constexpr size_t kNumBoxVertices = 24;
+
+    this->EnsureDebugVertices(kNumBoxVertices);
+
+    vec3f points[8] = { bbox.minimum,
+                        vec3f(bbox.maximum.x, bbox.minimum.y, bbox.minimum.z),
+                        vec3f(bbox.maximum.x, bbox.minimum.y, bbox.maximum.z),
+                        vec3f(bbox.minimum.x, bbox.minimum.y, bbox.maximum.z),
+                        vec3f(bbox.minimum.x, bbox.maximum.y, bbox.minimum.z),
+                        vec3f(bbox.maximum.x, bbox.maximum.y, bbox.minimum.z),
+                        bbox.maximum,
+                        vec3f(bbox.minimum.x, bbox.maximum.y, bbox.maximum.z) };
+
+    for (size_t i = 0; i < 8; ++i) {
+        points[i] = xform.transformPos(points[i]);
+    }
+
+    DebugVertex* vbStart = &mDebugVertices[mDebugVerticesCount];
+    vbStart[ 0] = { points[0], color };  vbStart[ 1] = { points[1], color };
+    vbStart[ 2] = { points[1], color };  vbStart[ 3] = { points[2], color };
+    vbStart[ 4] = { points[2], color };  vbStart[ 5] = { points[3], color };
+    vbStart[ 6] = { points[3], color };  vbStart[ 7] = { points[0], color };
+    vbStart[ 8] = { points[4], color };  vbStart[ 9] = { points[5], color };
+    vbStart[10] = { points[5], color };  vbStart[11] = { points[6], color };
+    vbStart[12] = { points[6], color };  vbStart[13] = { points[7], color };
+    vbStart[14] = { points[7], color };  vbStart[15] = { points[4], color };
+    vbStart[16] = { points[0], color };  vbStart[17] = { points[4], color };
+    vbStart[18] = { points[1], color };  vbStart[19] = { points[5], color };
+    vbStart[20] = { points[2], color };  vbStart[21] = { points[6], color };
+    vbStart[22] = { points[3], color };  vbStart[23] = { points[7], color };
+
+    mDebugVerticesCount += kNumBoxVertices;
 }
 
 void RenderView::SetModel(HalfLifeModel* mdl) {
