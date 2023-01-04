@@ -27,6 +27,9 @@ static void HLTextureToQImage(const HalfLifeModelTexture& hltexture, QImage& res
 // settings
 static const QString kLastOpenPath("LastOpenPath");
 static const QString kLastSavePath("LastSavePath");
+static const QString kRecentModelTemplate("RecentModel_");
+
+constexpr size_t kMaxRecentModels = 6;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -43,13 +46,15 @@ MainWindow::MainWindow(QWidget *parent)
     mRenderView->setGeometry(QRect(0, 0, ui->pnlUpper->width(), ui->pnlUpper->height()));
 
     this->setAcceptDrops(true);
+
+    this->UpdateRecentModelsList();
 }
 
 MainWindow::~MainWindow() {
     delete ui;
 }
 
-void MainWindow::OpenModel(const fs::path& filePath) {
+void MainWindow::OpenModel(const fs::path& filePath, const bool addToRecent) {
     StrongPtr<HalfLifeModel> mdl = MakeStrongPtr<HalfLifeModel>();
     if (mdl->LoadFromPath(filePath)) {
         mRenderView->SetModel(nullptr);
@@ -64,6 +69,10 @@ void MainWindow::OpenModel(const fs::path& filePath) {
         registry.setValue(kLastOpenPath, lastOpenDir);
 
         this->UpdateUIForModel();
+
+        if (addToRecent) {
+            this->AddToRecentModelsList(QString::fromStdString(filePath.u8string()));
+        }
     }
 }
 
@@ -96,7 +105,7 @@ void MainWindow::dropEvent(QDropEvent* event) {
     if (url.isLocalFile()) {
         QString filePath = url.toLocalFile();
         if (filePath.endsWith(".mdl")) {
-            this->OpenModel(filePath.toStdString());
+            this->OpenModel(filePath.toStdString(), true);
 
             event->acceptProposedAction();
         }
@@ -114,10 +123,17 @@ void MainWindow::on_actionLoad_model_triggered() {
     QString path = QFileDialog::getOpenFileName(this, tr("Select Half-Life model..."), lastOpenDir, tr("Half-Life model (*.mdl)"));
     if (!path.isEmpty()) {
         fs::path mdlPath = path.toStdString();
-        this->OpenModel(mdlPath);
+        this->OpenModel(mdlPath, true);
     }
 }
 
+void MainWindow::on_actionRecentModel_triggered(const size_t recentModelIdx) {
+    const QList<QAction*>& actions = ui->menuRecent_models->actions();
+    if (recentModelIdx < scast<size_t>(actions.size())) {
+        fs::path modelPath = actions[recentModelIdx]->text().toStdString();
+        this->OpenModel(modelPath, false);
+    }
+}
 
 void MainWindow::on_actionE_xit_triggered() {
     this->close();
@@ -227,6 +243,66 @@ void MainWindow::UpdateUIForModel() {
             ui->lstSequences->addItem(QString::fromStdString(mModel->GetSequence(i)->GetName()));
         }
         ui->lstSequences->setCurrentRow(0);
+    }
+}
+
+QList<QString> MainWindow::GetRecentModelsList() const {
+    QList<QString> result;
+
+    QSettings registry;
+    for (size_t i = 0; i < kMaxRecentModels; ++i) {
+        QString keyName = QString("%1%2").arg(kRecentModelTemplate).arg(i);
+        QString keyValue = registry.value(keyName).toString();
+        if (keyValue.isEmpty()) {
+            break;
+        }
+
+        result.push_back(keyValue);
+    }
+
+    return result;
+}
+
+void MainWindow::AddToRecentModelsList(const QString& entry) {
+    QList<QString> currentList = this->GetRecentModelsList();
+    const qsizetype idx = currentList.indexOf(entry);
+    if (idx != -1) {
+        currentList.removeAt(idx);
+    }
+
+    QList<QString> newList;
+    newList.push_back(entry);
+    for (size_t i = 0; i < kMaxRecentModels - 1; ++i) {
+        if (i < scast<size_t>(currentList.size())) {
+            newList.push_back(currentList[i]);
+        } else {
+            break;
+        }
+    }
+
+    QSettings registry;
+    for (size_t i = 0; i < scast<size_t>(newList.size()); ++i) {
+        QString keyName = QString("%1%2").arg(kRecentModelTemplate).arg(i);
+        registry.setValue(keyName, newList[i]);
+    }
+
+    this->UpdateRecentModelsList();
+}
+
+void MainWindow::UpdateRecentModelsList() {
+    ui->menuRecent_models->clear();
+
+    const QList<QString>& list = this->GetRecentModelsList();
+
+    if (list.isEmpty()) {
+        ui->menuRecent_models->setDisabled(true);
+    } else {
+        ui->menuRecent_models->setDisabled(false);
+
+        for (size_t i = 0; i < scast<size_t>(list.size()); ++i) {
+            QAction* action = ui->menuRecent_models->addAction(list[i]);
+            connect(action, &QAction::triggered, this, [this, i]() { this->on_actionRecentModel_triggered(i); });
+        }
     }
 }
 

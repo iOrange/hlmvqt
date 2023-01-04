@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     if (argc > 1) {
         fs::path mdlPath = argv[1];
         if (mdlPath.extension() == ".mdl") {
-            w.OpenModel(mdlPath);
+            w.OpenModel(mdlPath, true);
         }
     }
 

@@ -16,6 +16,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools Ope
 
 set(TS_FILES hlmvqt_en_US.ts)
 
+set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/hlmvqt_winres.rc")
+
 set(PROJECT_SOURCES
     mycommon.h
     main.cpp
@@ -31,6 +33,7 @@ set(PROJECT_SOURCES
     halflifemodel.h
     halflifemodel.cpp
     ${TS_FILES}
+    ${app_icon_resource_windows}
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
