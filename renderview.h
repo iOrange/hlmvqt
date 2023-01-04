@@ -76,32 +76,32 @@ public:
     ~RenderView();
 
 protected:
-    void                    initializeGL() override;
-    void                    paintGL() override;
-    void                    resizeGL(int w, int h) override;
-    void                    mousePressEvent(QMouseEvent* event) override;
-    void                    mouseMoveEvent(QMouseEvent* event) override;
-    void                    wheelEvent(QWheelEvent* event) override;
-    void                    timerEvent(QTimerEvent* event) override;
+    void                            initializeGL() override;
+    void                            paintGL() override;
+    void                            resizeGL(int w, int h) override;
+    void                            mousePressEvent(QMouseEvent* event) override;
+    void                            mouseMoveEvent(QMouseEvent* event) override;
+    void                            wheelEvent(QWheelEvent* event) override;
+    void                            timerEvent(QTimerEvent* event) override;
 
-    void                    MakeShader(StrongPtr<QOpenGLShaderProgram>& shader, const char* vs, const char* fs);
-    void                    UpdateMatrices();
-    void                    ResetView();
+    void                            MakeShader(StrongPtr<QOpenGLShaderProgram>& shader, const char* vs, const char* fs);
+    void                            UpdateMatrices();
+    void                            ResetView();
 
-    void                    BeginDebugDraw();
-    void                    EndDebugDraw();
-    void                    EnsureDebugVertices(const size_t required);
-    void                    FlushDebugVertices();
-    void                    DebugDrawLine(const vec3f& pt0, const vec3f& pt1, const uint32_t color);
-    void                    DebugDrawRing(const vec3f& origin, const vec3f& majorAxis, const vec3f& minorAxis, const uint32_t color);
-    void                    DebugDrawSphere(const vec3f& center, const float radius, const uint32_t color);
-    void                    DebugDrawTetrahedron(const vec3f& a, const vec3f& b, const float r, const uint32_t color);
-    void                    DebugDrawTransformedBBox(const mat4f& xform, const AABBox& bbox, const uint32_t color);
+    void                            BeginDebugDraw(const bool depthTest = false);
+    void                            EndDebugDraw();
+    void                            EnsureDebugVertices(const size_t required);
+    void                            FlushDebugVertices();
+    void                            DebugDrawLine(const vec3f& pt0, const vec3f& pt1, const uint32_t color);
+    void                            DebugDrawRing(const vec3f& origin, const vec3f& majorAxis, const vec3f& minorAxis, const uint32_t color);
+    void                            DebugDrawSphere(const vec3f& center, const float radius, const uint32_t color);
+    void                            DebugDrawTetrahedron(const vec3f& a, const vec3f& b, const float r, const uint32_t color);
+    void                            DebugDrawTransformedBBox(const mat4f& xform, const AABBox& bbox, const uint32_t color);
 
 public:
-    void                    SetModel(HalfLifeModel* mdl);
-    void                    SetRenderOptions(const RenderOptions& options);
-    const RenderOptions&    GetRenderOptions() const;
+    void                            SetModel(HalfLifeModel* mdl);
+    void                            SetRenderOptions(const RenderOptions& options);
+    const RenderOptions&            GetRenderOptions() const;
 
 private:
     QOpenGLContext*                 mGLContext;
@@ -140,6 +140,7 @@ private:
 
     MyArray<DebugVertex>            mDebugVertices;
     size_t                          mDebugVerticesCount;
+    bool                            mDebugDrawDepthTest;
 };
 
 #endif // RENDERVIEW_H

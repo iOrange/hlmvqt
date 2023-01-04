@@ -35,6 +35,7 @@ RenderView::RenderView(QWidget* parent)
     , mAlphaTestLocation(0)
     , mRenderOptions{}
     , mDebugVerticesCount(0)
+    , mDebugDrawDepthTest(false)
 {
     mRenderOptions.Reset();
 
@@ -312,7 +313,7 @@ void RenderView::paintGL() {
             }
 
             if (mRenderOptions.showHitBoxes && mModel->GetHitBoxesCount() > 0) {
-                this->BeginDebugDraw();
+                this->BeginDebugDraw(true);
 
                 const size_t numHitBoxes = mModel->GetHitBoxesCount();
                 constexpr uint32_t colorBox = 0xFF0000FF;
@@ -453,8 +454,8 @@ void RenderView::ResetView() {
     this->UpdateMatrices();
 }
 
-void RenderView::BeginDebugDraw() {
-    // nothing here just yet
+void RenderView::BeginDebugDraw(const bool depthTest /*= false*/) {
+    mDebugDrawDepthTest = depthTest;
 }
 void RenderView::EndDebugDraw() {
     this->FlushDebugVertices();
@@ -480,8 +481,13 @@ void RenderView::FlushDebugVertices() {
         mShaderDebug->setAttributeArray(k_AttribPosition, &vbStart->pos.x, 3, sizeof(DebugVertex));
         mShaderDebug->setAttributeArray(k_AttribColor, GL_UNSIGNED_BYTE, &vbStart->color, 4, sizeof(DebugVertex));
 
-        glDepthMask(GL_FALSE);
-        glDepthFunc(GL_ALWAYS);
+        if (!mDebugDrawDepthTest) {
+            glDepthMask(GL_FALSE);
+            glDepthFunc(GL_ALWAYS);
+        } else {
+            glDepthMask(GL_TRUE);
+            glDepthFunc(GL_LEQUAL);
+        }
 
         glDrawArrays(GL_LINES, 0, scast<GLsizei>(mDebugVerticesCount));
 
