@@ -220,6 +220,30 @@ void MainWindow::UpdateUIForModel() {
         ui->chkWireframeModel->setChecked(options.showWireframe);
         ui->chkWireframeoverlay->setChecked(options.overlayWireframe);
 
+        ui->comboBoneControllers->clear();
+        if (mModel->GetBoneControllersCount() == 0) {
+            ui->comboBoneControllers->setEnabled(false);
+            ui->sliderBoneControllerValue->setEnabled(false);
+            ui->lblBoneControllerBoneName->setText(QString());
+        } else {
+            ui->comboBoneControllers->setEnabled(true);
+            ui->sliderBoneControllerValue->setEnabled(true);
+
+            for (size_t i = 0; i < mModel->GetBoneControllersCount(); ++i) {
+                const HalfLifeModelBoneController& controller = mModel->GetBoneController(i);
+                QString text;
+                if (controller.index == HalfLifeModelBoneController::kMouthIndex) {
+                    text = tr("Mouth");
+                } else {
+                    text = QString("%1 %2").arg(tr("Controller")).arg(controller.index);
+                }
+                ui->comboBoneControllers->addItem(text);
+            }
+
+            ui->comboBoneControllers->setCurrentIndex(0);
+        }
+
+
         // textures tab
         ui->lstTextures->clear();
         const size_t numTextures = mModel->GetTexturesCount();
@@ -450,5 +474,30 @@ void MainWindow::on_spinImageZoom_valueChanged(double value) {
         RenderOptions options = mRenderView->GetRenderOptions();
         options.imageZoom = scast<float>(value);
         mRenderView->SetRenderOptions(options);
+    }
+}
+
+void MainWindow::on_comboBoneControllers_currentIndexChanged(int index) {
+    if (index >= 0 && mModel && index < mModel->GetBoneControllersCount()) {
+        const HalfLifeModelBoneController& controller = mModel->GetBoneController(index);
+
+        ui->sliderBoneControllerValue->setMinimum(scast<int>(controller.start));
+        ui->sliderBoneControllerValue->setMaximum(scast<int>(controller.end));
+        ui->sliderBoneControllerValue->setValue(0);
+
+        if (controller.boneIdx >= 0 && controller.boneIdx < mModel->GetBonesCount()) {
+            const HalfLifeModelBone& bone = mModel->GetBone(scast<size_t>(controller.boneIdx));
+            ui->lblBoneControllerBoneName->setText(QString::fromStdString(bone.name));
+        }
+    }
+}
+
+void MainWindow::on_sliderBoneControllerValue_valueChanged(int value) {
+    if (mModel) {
+        const int index = ui->comboBoneControllers->currentIndex();
+
+        if (index >= 0 && index < mModel->GetBoneControllersCount()) {
+            mModel->SetBoneControllerValue(scast<size_t>(index), scast<float>(value));
+        }
     }
 }

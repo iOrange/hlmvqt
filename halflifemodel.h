@@ -48,6 +48,22 @@ struct HalfLifeModelBone {
     // scales used for decoding anims
     vec3f       scalePos;
     vec3f       scaleRot;
+    // 
+    int32_t     controllerIdx[6]; // rot + pos
+};
+
+struct HalfLifeModelBoneController {
+    static const uint32_t kMouthIndex = 4;
+
+    int32_t     boneIdx;
+    uint32_t    type;
+    float       start;
+    float       end;
+    uint32_t    index;
+
+    inline bool IsRotation() const {
+        return 0 != (this->type & (STUDIO_XR | STUDIO_YR | STUDIO_ZR));
+    }
 };
 
 struct HalfLifeModelAttachment {
@@ -97,48 +113,55 @@ public:
     HalfLifeModel();
     ~HalfLifeModel();
 
-    bool                                LoadFromPath(const fs::path& filePath);
-    bool                                LoadFromMemStream(MemStream& stream, const studiohdr_t& stdhdr);
+    bool                                    LoadFromPath(const fs::path& filePath);
+    bool                                    LoadFromMemStream(MemStream& stream, const studiohdr_t& stdhdr);
 
-    void                                LoadTextures(MemStream& stream, const size_t numTextures, const size_t texturesOffset);
+    void                                    LoadTextures(MemStream& stream, const size_t numTextures, const size_t texturesOffset);
 
-    size_t                              GetBodyPartsCount() const;
-    HalfLifeModelBodypart*              GetBodyPart(const size_t idx) const;
+    size_t                                  GetBodyPartsCount() const;
+    HalfLifeModelBodypart*                  GetBodyPart(const size_t idx) const;
 
-    size_t                              GetBonesCount() const;
-    const HalfLifeModelBone&            GetBone(const size_t idx) const;
-    const mat4f&                        GetBoneMat(const size_t idx) const;
+    size_t                                  GetBonesCount() const;
+    const HalfLifeModelBone&                GetBone(const size_t idx) const;
+    const mat4f&                            GetBoneMat(const size_t idx) const;
 
-    size_t                              GetTexturesCount() const;
-    const HalfLifeModelTexture&         GetTexture(const size_t idx) const;
+    size_t                                  GetBoneControllersCount() const;
+    const HalfLifeModelBoneController&      GetBoneController(const size_t idx) const;
+    void                                    SetBoneControllerValue(const size_t idx, const float value);
+    float                                   GetBoneControllerValue(const size_t idx);
 
-    const AABBox&                       GetBounds() const;
+    size_t                                  GetTexturesCount() const;
+    const HalfLifeModelTexture&             GetTexture(const size_t idx) const;
 
-    size_t                              GetSequencesCount() const;
-    HalfLifeModelSequence*              GetSequence(const size_t idx) const;
+    const AABBox&                           GetBounds() const;
 
-    size_t                              GetAttachmentsCount() const;
-    const HalfLifeModelAttachment&      GetAttachment(const size_t idx) const;
+    size_t                                  GetSequencesCount() const;
+    HalfLifeModelSequence*                  GetSequence(const size_t idx) const;
 
-    size_t                              GetHitBoxesCount() const;
-    const HalfLifeModelHitBox&          GetHitBox(const size_t idx) const;
+    size_t                                  GetAttachmentsCount() const;
+    const HalfLifeModelAttachment&          GetAttachment(const size_t idx) const;
 
-    void                                CalculateSkeleton(const float frame, const size_t sequenceIdx);
+    size_t                                  GetHitBoxesCount() const;
+    const HalfLifeModelHitBox&              GetHitBox(const size_t idx) const;
+
+    void                                    CalculateSkeleton(const float frame, const size_t sequenceIdx);
 
 private:
-    void                                LoadSequenceAnim(SequencePtr& sequence, MemStream& stream, const size_t offsetAnim);
+    void                                    LoadSequenceAnim(SequencePtr& sequence, MemStream& stream, const size_t offsetAnim);
 
 private:
-    fs::path                            mSourcePath;
-    MyArray<BodyPartPtr>                mBodyParts;
-    MyArray<HalfLifeModelTexture>       mTextures;
-    MyArray<HalfLifeModelBone>          mBones;
-    MyArray<mat4f>                      mSkeleton;
-    AABBox                              mBounds;
-    MyArray<SequencePtr>                mSequences;
-    MyArray<HalfLifeModelSequenceGroup> mSequenceGroups;
-    MyArray<HalfLifeModelAttachment>    mAttachments;
-    MyArray<HalfLifeModelHitBox>        mHitBoxes;
+    fs::path                                mSourcePath;
+    MyArray<BodyPartPtr>                    mBodyParts;
+    MyArray<HalfLifeModelTexture>           mTextures;
+    MyArray<HalfLifeModelBone>              mBones;
+    MyArray<HalfLifeModelBoneController>    mBoneControllers;
+    MyArray<float>                          mBoneControllerValues;
+    MyArray<mat4f>                          mSkeleton;
+    AABBox                                  mBounds;
+    MyArray<SequencePtr>                    mSequences;
+    MyArray<HalfLifeModelSequenceGroup>     mSequenceGroups;
+    MyArray<HalfLifeModelAttachment>        mAttachments;
+    MyArray<HalfLifeModelHitBox>            mHitBoxes;
 };
 
 class HalfLifeModelBodypart {
@@ -228,8 +251,4 @@ private:
     AABBox                          mBounds;
     MyArray<HalfLifeModelAnimEvent> mEvents;
     MyArray<HalfLifeModelAnimLine>  mAnimLines;
-};
-
-class HalfLifeModelBoneControllers {
-
 };

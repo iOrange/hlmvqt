@@ -265,8 +265,30 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
             hlbone.rot = vec3f(sbone.value[3], sbone.value[4], sbone.value[5]);
             hlbone.scalePos = vec3f(sbone.scale[0], sbone.scale[1], sbone.scale[2]);
             hlbone.scaleRot = vec3f(sbone.scale[3], sbone.scale[4], sbone.scale[5]);
+            memcpy(hlbone.controllerIdx, sbone.bonecontroller, sizeof(hlbone.controllerIdx));
 
             mSkeleton[i] = mat4f::identity();
+        }
+    }
+
+    // load bone controllers
+    if (stdhdr.numBoneControllers > 0) {
+        mBoneControllers.resize(stdhdr.numBoneControllers);
+        mBoneControllerValues.resize(stdhdr.numBoneControllers);
+
+        MemStream bctrlsStream = stream.Substream(scast<size_t>(stdhdr.offsetBoneControllers), stream.Length());
+        for (int i = 0; i < stdhdr.numBoneControllers; ++i) {
+            mstudiobonecontroller_t hlbcontroller = {};
+            bctrlsStream.ReadStruct(hlbcontroller);
+
+            HalfLifeModelBoneController& bcontroller = mBoneControllers[i];
+            bcontroller.boneIdx = hlbcontroller.bone;
+            bcontroller.type = scast<uint32_t>(hlbcontroller.type);
+            bcontroller.start = hlbcontroller.start;
+            bcontroller.end = hlbcontroller.end;
+            bcontroller.index = scast<uint32_t>(hlbcontroller.index);
+
+            mBoneControllerValues[i] = 0.0f;
         }
     }
 
@@ -441,6 +463,23 @@ const mat4f& HalfLifeModel::GetBoneMat(const size_t idx) const {
     return mSkeleton[idx];
 }
 
+size_t HalfLifeModel::GetBoneControllersCount() const {
+    return mBoneControllers.size();
+}
+
+const HalfLifeModelBoneController& HalfLifeModel::GetBoneController(const size_t idx) const {
+    return mBoneControllers[idx];
+}
+
+void HalfLifeModel::SetBoneControllerValue(const size_t idx, const float value) {
+    mBoneControllerValues[idx] = value;
+}
+
+float HalfLifeModel::GetBoneControllerValue(const size_t idx) {
+    const HalfLifeModelBoneController& controller = this->GetBoneController(idx);
+    return controller.IsRotation() ? Deg2Rad(mBoneControllerValues[idx]) : mBoneControllerValues[idx];
+}
+
 size_t HalfLifeModel::GetTexturesCount() const {
     return mTextures.size();
 }
@@ -511,6 +550,34 @@ void HalfLifeModel::CalculateSkeleton(const float frame, const size_t sequenceId
                 vec3f rotationB(scast<float>(valueB.rotation[0]) * bone.scaleRot.x,
                                 scast<float>(valueB.rotation[1]) * bone.scaleRot.y,
                                 scast<float>(valueB.rotation[2]) * bone.scaleRot.z);
+
+                // add bone controllers to the pos if any
+                if (bone.controllerIdx[0] >= 0) {
+                    offsetA.x += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[0]));
+                    offsetB.x += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[0]));
+                }
+                if (bone.controllerIdx[1] >= 0) {
+                    offsetA.y += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[1]));
+                    offsetB.y += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[1]));
+                }
+                if (bone.controllerIdx[2] >= 0) {
+                    offsetA.z += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[2]));
+                    offsetB.z += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[2]));
+                }
+
+                // add bone controllers to the rotation if any
+                if (bone.controllerIdx[3] >= 0) {
+                    rotationA.x += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[3]));
+                    rotationB.x += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[3]));
+                }
+                if (bone.controllerIdx[4] >= 0) {
+                    rotationA.y += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[4]));
+                    rotationB.y += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[4]));
+                }
+                if (bone.controllerIdx[5] >= 0) {
+                    rotationA.z += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[5]));
+                    rotationB.z += this->GetBoneControllerValue(scast<size_t>(bone.controllerIdx[5]));
+                }
 
                 pos = bone.pos + Lerp(offsetA, offsetB, frameLerp);
                 rot = quatf::slerp(quatf::fromEuler(bone.rot + rotationA), quatf::fromEuler(bone.rot + rotationB), frameLerp);
