@@ -23,6 +23,16 @@ static void HLTextureToQImage(const HalfLifeModelTexture& hltexture, QImage& res
     result.setColorTable(imgPal);
 }
 
+// makes path to have consistent separators '/'
+static fs::path FixPath(const fs::path& pathToFix) {
+    std::string str = pathToFix.u8string();
+    std::string::size_type pos = 0;
+    while (std::string::npos != (pos = str.find_first_of('\\'))) {
+        str[pos] = '/';
+    }
+    return fs::path{ str };
+}
+
 
 // settings
 static const QString kLastOpenPath("LastOpenPath");
@@ -55,8 +65,10 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::OpenModel(const fs::path& filePath, const bool addToRecent) {
+    fs::path fixedPath = FixPath(filePath);
+
     StrongPtr<HalfLifeModel> mdl = MakeStrongPtr<HalfLifeModel>();
-    if (mdl->LoadFromPath(filePath)) {
+    if (mdl->LoadFromPath(fixedPath)) {
         mRenderView->SetModel(nullptr);
         mModel.swap(mdl);
         mRenderView->SetModel(mModel.get());
@@ -64,14 +76,14 @@ void MainWindow::OpenModel(const fs::path& filePath, const bool addToRecent) {
         QSettings registry;
         QString lastOpenDir = registry.value(kLastOpenPath).toString();
 
-        fs::path folderPath = fs::absolute(filePath.parent_path());
+        fs::path folderPath = fs::absolute(fixedPath.parent_path());
         lastOpenDir = QString::fromStdString(folderPath.u8string());
         registry.setValue(kLastOpenPath, lastOpenDir);
 
         this->UpdateUIForModel();
 
         if (addToRecent) {
-            this->AddToRecentModelsList(QString::fromStdString(filePath.u8string()));
+            this->AddToRecentModelsList(QString::fromStdString(fixedPath.u8string()));
         }
     }
 }
@@ -141,7 +153,7 @@ void MainWindow::on_actionE_xit_triggered() {
 
 
 void MainWindow::on_actionAbout_Qt_triggered() {
-    QMessageBox::aboutQt(this, "About Qt...");
+    QMessageBox::aboutQt(this, tr("About Qt..."));
 }
 
 
@@ -219,6 +231,12 @@ void MainWindow::UpdateUIForModel() {
         ui->chkShowNormals->setChecked(options.showNormals);
         ui->chkWireframeModel->setChecked(options.showWireframe);
         ui->chkWireframeoverlay->setChecked(options.overlayWireframe);
+        ui->lblTexturesCount->setText(QString::number(mModel->GetTexturesCount()));
+        ui->lblBodypartsCount->setText(QString::number(mModel->GetBodyPartsCount()));
+        ui->lblSkinsCount->setText(QString::number(mModel->GetSkinsCount()));
+        ui->lblBonesCount->setText(QString::number(mModel->GetBonesCount()));
+        ui->lblAttachmentsCount->setText(QString::number(mModel->GetAttachmentsCount()));
+        ui->lblSequencesCount->setText(QString::number(mModel->GetSequencesCount()));
 
         ui->comboBoneControllers->clear();
         if (mModel->GetBoneControllersCount() == 0) {
@@ -243,6 +261,19 @@ void MainWindow::UpdateUIForModel() {
             ui->comboBoneControllers->setCurrentIndex(0);
         }
 
+        // body tab
+        ui->lstBodyParts->clear();
+        ui->lstBodySubModels->clear();
+        ui->lstSkins->clear();
+        for (size_t i = 0; i < mModel->GetBodyPartsCount(); ++i) {
+            const HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(i);
+            ui->lstBodyParts->addItem(QString::fromStdString(bodyPart->GetName()));
+        }
+        ui->lstBodyParts->setCurrentRow(0);
+        for (size_t i = 0; i < mModel->GetSkinsCount(); ++i) {
+            ui->lstSkins->addItem(QString("%1 %2").arg(tr("Skin")).arg(i));
+        }
+        ui->lstSkins->setCurrentRow(0);
 
         // textures tab
         ui->lstTextures->clear();
@@ -501,3 +532,38 @@ void MainWindow::on_sliderBoneControllerValue_valueChanged(int value) {
         }
     }
 }
+
+void MainWindow::on_lstBodyParts_currentRowChanged(int currentRow) {
+    if (mModel && currentRow >= 0 && currentRow < mModel->GetBodyPartsCount()) {
+        ui->lstBodySubModels->clear();
+
+        const HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(scast<size_t>(currentRow));
+        for (size_t i = 0; i < bodyPart->GetStudioModelsCount(); ++i) {
+            const HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(i);
+            ui->lstBodySubModels->addItem(QString::fromStdString(smdl->GetName()));
+        }
+    }
+}
+
+
+void MainWindow::on_lstBodySubModels_currentRowChanged(int currentRow) {
+    if (mModel) {
+        const int bodyPartIdx = ui->lstBodyParts->currentRow();
+        if (bodyPartIdx >= 0 && bodyPartIdx < mModel->GetBodyPartsCount()) {
+            const HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(scast<size_t>(bodyPartIdx));
+
+            if (currentRow >= 0 && currentRow < bodyPart->GetStudioModelsCount()) {
+                //const HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(scast<size_t>(currentRow));
+                mModel->SetBodyPartActiveSubModel(bodyPartIdx, scast<size_t>(currentRow));
+            }
+        }
+    }
+}
+
+
+void MainWindow::on_lstSkins_currentRowChanged(int currentRow) {
+    if (mModel && currentRow >= 0 && currentRow < mModel->GetSkinsCount()) {
+        mModel->SetActiveSkin(scast<size_t>(currentRow));
+    }
+}
+

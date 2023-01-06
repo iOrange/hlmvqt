@@ -50,12 +50,12 @@ struct studiohdr_t {
     int     offsetTextures;
     int     offsetTexturesData;
 
-    int     numskinref;         // replaceable textures
-    int     numskinfamilies;
-    int     offsetskin;
+    int     numSkinRef;         // replaceable textures
+    int     numSkinFamilies;
+    int     offsetSkins;
 
-    int     numbodyparts;
-    int     offsetbodypart;
+    int     numBodyParts;
+    int     offsetBodyParts;
 
     int     numAttachments;     // queryable attachable points
     int     offsetAttachments;

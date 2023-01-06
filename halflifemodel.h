@@ -34,6 +34,10 @@ struct HalfLifeModelTexture {
     MyArray<uint8_t>    palette;
 };
 
+struct HalfLifeModelSkin {
+    MyArray<uint16_t>   remapTable;
+};
+
 struct HalfLifeModelStudioMesh {
     uint32_t    numIndices;
     uint32_t    indicesOffset;
@@ -117,9 +121,13 @@ public:
     bool                                    LoadFromMemStream(MemStream& stream, const studiohdr_t& stdhdr);
 
     void                                    LoadTextures(MemStream& stream, const size_t numTextures, const size_t texturesOffset);
+    void                                    LoadSkins(MemStream& stream, const size_t numSkins, const size_t numTexturesPerSkin, const size_t skinsOffset);
 
     size_t                                  GetBodyPartsCount() const;
     HalfLifeModelBodypart*                  GetBodyPart(const size_t idx) const;
+
+    void                                    SetBodyPartActiveSubModel(const size_t bodyPartIdx, const size_t subModelIdx);
+    size_t                                  GetBodyPartActiveSubModel(const size_t bodyPartIdx) const;
 
     size_t                                  GetBonesCount() const;
     const HalfLifeModelBone&                GetBone(const size_t idx) const;
@@ -132,6 +140,11 @@ public:
 
     size_t                                  GetTexturesCount() const;
     const HalfLifeModelTexture&             GetTexture(const size_t idx) const;
+
+    size_t                                  GetSkinsCount() const;
+    void                                    SetActiveSkin(const size_t skinIdx);
+    size_t                                  GetActiveSkin() const;
+    size_t                                  GetSkinTexture(const size_t textureIdx) const;
 
     const AABBox&                           GetBounds() const;
 
@@ -152,7 +165,10 @@ private:
 private:
     fs::path                                mSourcePath;
     MyArray<BodyPartPtr>                    mBodyParts;
+    MyArray<size_t>                         mActiveBodyPartSubModel;
     MyArray<HalfLifeModelTexture>           mTextures;
+    MyArray<HalfLifeModelSkin>              mSkins;
+    size_t                                  mActiveSkin;
     MyArray<HalfLifeModelBone>              mBones;
     MyArray<HalfLifeModelBoneController>    mBoneControllers;
     MyArray<float>                          mBoneControllerValues;

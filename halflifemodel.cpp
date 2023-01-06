@@ -82,11 +82,11 @@ static int16_t DecodeAnimValue(const mstudioanim_t* animPtr, int frame, const si
 }
 
 
-HalfLifeModel::HalfLifeModel() {
-
+HalfLifeModel::HalfLifeModel()
+    : mActiveSkin(0)
+{
 }
 HalfLifeModel::~HalfLifeModel() {
-
 }
 
 bool HalfLifeModel::LoadFromPath(const fs::path& filePath) {
@@ -115,7 +115,10 @@ bool HalfLifeModel::LoadFromPath(const fs::path& filePath) {
             tstream.ReadStruct(stdhdr);
 
             if (HalfLifeModel::kIDSTMagic == stdhdr.magic && stdhdr.numTextures) {
-                this->LoadTextures(tstream, stdhdr.numTextures, stdhdr.offsetTextures);
+                this->LoadTextures(tstream, scast<size_t>(stdhdr.numTextures), scast<size_t>(stdhdr.offsetTextures));
+                if (stdhdr.numSkinFamilies > 0) {
+                    this->LoadSkins(tstream, scast<size_t>(stdhdr.numSkinFamilies), scast<size_t>(stdhdr.numSkinRef), scast<size_t>(stdhdr.offsetSkins));
+                }
             }
         }
     }
@@ -131,10 +134,15 @@ bool HalfLifeModel::LoadFromMemStream(MemStream& stream, const studiohdr_t& stdh
     if (stdhdr.numTextures > 0) {
         this->LoadTextures(stream, scast<size_t>(stdhdr.numTextures), scast<size_t>(stdhdr.offsetTextures));
     }
+    if (stdhdr.numSkinFamilies > 0) {
+        this->LoadSkins(stream, scast<size_t>(stdhdr.numSkinFamilies), scast<size_t>(stdhdr.numSkinRef), scast<size_t>(stdhdr.offsetSkins));
+    }
 
-    mBodyParts.resize(stdhdr.numbodyparts);
-    MemStream bodypartsStream = stream.Substream(scast<size_t>(stdhdr.offsetbodypart), stream.Length());
-    for (int bodyIdx = 0; bodyIdx < stdhdr.numbodyparts; ++bodyIdx) {
+    // load main geometry
+    mBodyParts.resize(stdhdr.numBodyParts);
+    mActiveBodyPartSubModel.resize(stdhdr.numBodyParts, 0);
+    MemStream bodypartsStream = stream.Substream(scast<size_t>(stdhdr.offsetBodyParts), stream.Length());
+    for (int bodyIdx = 0; bodyIdx < stdhdr.numBodyParts; ++bodyIdx) {
         mBodyParts[bodyIdx] = MakeRefPtr<HalfLifeModelBodypart>();
         BodyPartPtr& bodyPart = mBodyParts[bodyIdx];
 
@@ -443,12 +451,30 @@ void HalfLifeModel::LoadTextures(MemStream& stream, const size_t numTextures, co
     }
 }
 
+void HalfLifeModel::LoadSkins(MemStream& stream, const size_t numSkins, const size_t numTexturesPerSkin, const size_t skinsOffset) {
+    MemStream skinsStream = stream.Substream(skinsOffset, stream.Length());
+
+    mSkins.resize(numSkins);
+    for (HalfLifeModelSkin& skin : mSkins) {
+        skin.remapTable.resize(numTexturesPerSkin);
+        skinsStream.ReadToBuffer(skin.remapTable.data(), numTexturesPerSkin * sizeof(uint16_t));
+    }
+}
+
 size_t HalfLifeModel::GetBodyPartsCount() const {
     return mBodyParts.size();
 }
 
 HalfLifeModelBodypart* HalfLifeModel::GetBodyPart(const size_t idx) const {
     return mBodyParts[idx].get();
+}
+
+void HalfLifeModel::SetBodyPartActiveSubModel(const size_t bodyPartIdx, const size_t subModelIdx) {
+    mActiveBodyPartSubModel[bodyPartIdx] = subModelIdx;
+}
+
+size_t HalfLifeModel::GetBodyPartActiveSubModel(const size_t bodyPartIdx) const {
+    return mActiveBodyPartSubModel[bodyPartIdx];
 }
 
 size_t HalfLifeModel::GetBonesCount() const {
@@ -486,6 +512,27 @@ size_t HalfLifeModel::GetTexturesCount() const {
 
 const HalfLifeModelTexture& HalfLifeModel::GetTexture(const size_t idx) const {
     return mTextures[idx];
+}
+
+size_t HalfLifeModel::GetSkinsCount() const {
+    return mSkins.size();
+}
+
+void HalfLifeModel::SetActiveSkin(const size_t skinIdx) {
+    mActiveSkin = skinIdx;
+}
+
+size_t HalfLifeModel::GetActiveSkin() const {
+    return mActiveSkin;
+}
+
+size_t HalfLifeModel::GetSkinTexture(const size_t textureIdx) const {
+    const HalfLifeModelSkin& skin = mSkins[mActiveSkin];
+    if (textureIdx < skin.remapTable.size()) {
+        return skin.remapTable[textureIdx];
+    } else {
+        return textureIdx;
+    }
 }
 
 const AABBox& HalfLifeModel::GetBounds() const {

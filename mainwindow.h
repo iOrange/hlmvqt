@@ -50,6 +50,9 @@ private slots:
     void                        on_spinImageZoom_valueChanged(double value);
     void                        on_comboBoneControllers_currentIndexChanged(int index);
     void                        on_sliderBoneControllerValue_valueChanged(int value);
+    void                        on_lstBodyParts_currentRowChanged(int currentRow);
+    void                        on_lstBodySubModels_currentRowChanged(int currentRow);
+    void                        on_lstSkins_currentRowChanged(int currentRow);
 
 private:
     void                        UpdateUIForModel();

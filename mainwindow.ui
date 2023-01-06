@@ -202,25 +202,12 @@
          <property name="title">
           <string>Model info:</string>
          </property>
-         <widget class="QLabel" name="label">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>101</width>
-            <height>16</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Name:</string>
-          </property>
-         </widget>
          <widget class="QLabel" name="label_2">
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>40</y>
-            <width>101</width>
+            <y>30</y>
+            <width>151</width>
             <height>16</height>
            </rect>
           </property>
@@ -232,8 +219,8 @@
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>60</y>
-            <width>101</width>
+            <y>50</y>
+            <width>151</width>
             <height>16</height>
            </rect>
           </property>
@@ -257,8 +244,8 @@
          <widget class="QLabel" name="lblTexturesCount">
           <property name="geometry">
            <rect>
-            <x>120</x>
-            <y>40</y>
+            <x>170</x>
+            <y>30</y>
             <width>101</width>
             <height>16</height>
            </rect>
@@ -267,17 +254,121 @@
            <string>0</string>
           </property>
          </widget>
-         <widget class="QLabel" name="lblBodypartsCpunt">
+         <widget class="QLabel" name="lblBodypartsCount">
           <property name="geometry">
            <rect>
-            <x>120</x>
-            <y>60</y>
+            <x>170</x>
+            <y>50</y>
             <width>101</width>
             <height>16</height>
            </rect>
           </property>
           <property name="text">
            <string>0</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblSkinsCount">
+          <property name="geometry">
+           <rect>
+            <x>170</x>
+            <y>70</y>
+            <width>101</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>0</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_10">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>70</y>
+            <width>151</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Skins count:</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblBonesCount">
+          <property name="geometry">
+           <rect>
+            <x>170</x>
+            <y>90</y>
+            <width>101</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>0</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_11">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>90</y>
+            <width>151</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Bones count:</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblAttachmentsCount">
+          <property name="geometry">
+           <rect>
+            <x>170</x>
+            <y>110</y>
+            <width>101</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>0</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_12">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>110</y>
+            <width>151</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Attachments count:</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="lblSequencesCount">
+          <property name="geometry">
+           <rect>
+            <x>170</x>
+            <y>130</y>
+            <width>101</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>0</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_13">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>130</y>
+            <width>151</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Sequences count:</string>
           </property>
          </widget>
         </widget>
@@ -351,6 +442,107 @@
         <attribute name="title">
          <string>Body</string>
         </attribute>
+        <widget class="QListWidget" name="lstBodyParts">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>30</y>
+           <width>230</width>
+           <height>141</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QListWidget" name="lstBodySubModels">
+         <property name="geometry">
+          <rect>
+           <x>259</x>
+           <y>30</y>
+           <width>250</width>
+           <height>141</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_6">
+         <property name="geometry">
+          <rect>
+           <x>2</x>
+           <y>10</y>
+           <width>251</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Body parts:</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_7">
+         <property name="geometry">
+          <rect>
+           <x>261</x>
+           <y>10</y>
+           <width>251</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Body part model:</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_8">
+         <property name="geometry">
+          <rect>
+           <x>234</x>
+           <y>90</y>
+           <width>21</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::RichText</enum>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+        <widget class="QListWidget" name="lstSkins">
+         <property name="geometry">
+          <rect>
+           <x>540</x>
+           <y>30</y>
+           <width>250</width>
+           <height>141</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="Line" name="line">
+         <property name="geometry">
+          <rect>
+           <x>524</x>
+           <y>30</y>
+           <width>3</width>
+           <height>141</height>
+          </rect>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_9">
+         <property name="geometry">
+          <rect>
+           <x>542</x>
+           <y>10</y>
+           <width>231</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Skins:</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QWidget" name="tabTextures">
         <attribute name="title">

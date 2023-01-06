@@ -210,92 +210,91 @@ void RenderView::paintGL() {
                 const size_t numBodyParts = mModel->GetBodyPartsCount();
                 for (size_t i = 0; i < numBodyParts; ++i) {
                     HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(i);
-                    const size_t numStudioModels = bodyPart->GetStudioModelsCount();
 
-                    for (size_t j = 0; j < 1/*numStudioModels*/; ++j) {
-                        HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(j);
+                    const size_t activeSubModel = mModel->GetBodyPartActiveSubModel(i);
+                    HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(activeSubModel);
 
-                        const uint16_t* indices = smdl->GetIndices();
-                        const HalfLifeModelVertex* srcVertices = smdl->GetVertices();
+                    const uint16_t* indices = smdl->GetIndices();
+                    const HalfLifeModelVertex* srcVertices = smdl->GetVertices();
 
-                        const vec3f* posPtr = nullptr;
-                        const vec3f* normalsPtr = nullptr;
-                        size_t vertexSize = 0;
+                    const vec3f* posPtr = nullptr;
+                    const vec3f* normalsPtr = nullptr;
+                    size_t vertexSize = 0;
 
-                        if (mModel->GetBonesCount() > 0) {
-                            const size_t numVertices = smdl->GetVerticesCount();
-                            mRenderVertices.resize(numVertices);
-                            RenderVertex* renderVertices = mRenderVertices.data();
-                            for (size_t k = 0; k < numVertices; ++k) {
-                                const mat4f& boneMat = mModel->GetBoneMat(srcVertices[k].boneIdx);
-                                renderVertices[k].pos = boneMat.transformPos(srcVertices[k].pos);
-                                renderVertices[k].normal = boneMat.transformDir(srcVertices[k].normal);
-                                renderVertices[k].uv = srcVertices[k].uv;
-                            }
-
-                            if (drawCycle == kCycleNormals) {
-                                posPtr = &renderVertices->pos;
-                                normalsPtr = &renderVertices->normal;
-                                vertexSize = sizeof(RenderVertex);
-                            } else {
-                                mShaderModel->setAttributeArray(k_AttribPosition, &renderVertices->pos.x, 3, sizeof(RenderVertex));
-                                mShaderModel->setAttributeArray(k_AttribNormal, &renderVertices->normal.x, 3, sizeof(RenderVertex));
-                                mShaderModel->setAttributeArray(k_AttribUV, &renderVertices->uv.x, 2, sizeof(RenderVertex));
-                            }
-                        } else {
-                            if (drawCycle == kCycleNormals) {
-                                posPtr = &srcVertices->pos;
-                                normalsPtr = &srcVertices->normal;
-                                vertexSize = sizeof(HalfLifeModelVertex);
-                            } else {
-                                mShaderModel->setAttributeArray(k_AttribPosition, &srcVertices->pos.x, 3, sizeof(HalfLifeModelVertex));
-                                mShaderModel->setAttributeArray(k_AttribNormal, &srcVertices->normal.x, 3, sizeof(HalfLifeModelVertex));
-                                mShaderModel->setAttributeArray(k_AttribUV, &srcVertices->uv.x, 2, sizeof(HalfLifeModelVertex));
-                            }
+                    if (mModel->GetBonesCount() > 0) {
+                        const size_t numVertices = smdl->GetVerticesCount();
+                        mRenderVertices.resize(numVertices);
+                        RenderVertex* renderVertices = mRenderVertices.data();
+                        for (size_t k = 0; k < numVertices; ++k) {
+                            const mat4f& boneMat = mModel->GetBoneMat(srcVertices[k].boneIdx);
+                            renderVertices[k].pos = boneMat.transformPos(srcVertices[k].pos);
+                            renderVertices[k].normal = boneMat.transformDir(srcVertices[k].normal);
+                            renderVertices[k].uv = srcVertices[k].uv;
                         }
 
-                        if (drawCycle < kCycleNormals) {
-                            const size_t numMeshes = smdl->GetMeshesCount();
-                            for (size_t k = 0; k < numMeshes; ++k) {
-                                const HalfLifeModelStudioMesh& mesh = smdl->GetMesh(k);
-                                if (mesh.textureIndex < mTextures.size()) {
-                                    if (renderTextured) {
-                                        mTextures[mesh.textureIndex].draw->bind();
-                                    } else {
-                                        mWhiteTexture->bind();
-                                    }
+                        if (drawCycle == kCycleNormals) {
+                            posPtr = &renderVertices->pos;
+                            normalsPtr = &renderVertices->normal;
+                            vertexSize = sizeof(RenderVertex);
+                        } else {
+                            mShaderModel->setAttributeArray(k_AttribPosition, &renderVertices->pos.x, 3, sizeof(RenderVertex));
+                            mShaderModel->setAttributeArray(k_AttribNormal, &renderVertices->normal.x, 3, sizeof(RenderVertex));
+                            mShaderModel->setAttributeArray(k_AttribUV, &renderVertices->uv.x, 2, sizeof(RenderVertex));
+                        }
+                    } else {
+                        if (drawCycle == kCycleNormals) {
+                            posPtr = &srcVertices->pos;
+                            normalsPtr = &srcVertices->normal;
+                            vertexSize = sizeof(HalfLifeModelVertex);
+                        } else {
+                            mShaderModel->setAttributeArray(k_AttribPosition, &srcVertices->pos.x, 3, sizeof(HalfLifeModelVertex));
+                            mShaderModel->setAttributeArray(k_AttribNormal, &srcVertices->normal.x, 3, sizeof(HalfLifeModelVertex));
+                            mShaderModel->setAttributeArray(k_AttribUV, &srcVertices->uv.x, 2, sizeof(HalfLifeModelVertex));
+                        }
+                    }
 
-                                    const HalfLifeModelTexture& hltexture = mModel->GetTexture(mesh.textureIndex);
-                                    mShaderModel->setUniformValue(mIsChromeLocation, hltexture.chrome);
-                                    if (renderTextured && hltexture.masked) {
-                                        mShaderModel->setUniformValue(mAlphaTestLocation, 0.5f, 0.5f, 0.5f, 0.5f);
-                                    } else {
-                                        mShaderModel->setUniformValue(mAlphaTestLocation, -1.0f, -1.0f, -1.0f, -1.0f);
-                                    }
+                    if (drawCycle < kCycleNormals) {
+                        const size_t numMeshes = smdl->GetMeshesCount();
+                        for (size_t k = 0; k < numMeshes; ++k) {
+                            const HalfLifeModelStudioMesh& mesh = smdl->GetMesh(k);
+                            const size_t textureIdx = mModel->GetSkinTexture(mesh.textureIndex);
+                            if (textureIdx < mTextures.size()) {
+                                if (renderTextured) {
+                                    mTextures[textureIdx].draw->bind();
                                 } else {
                                     mWhiteTexture->bind();
-                                    mShaderModel->setUniformValue(mIsChromeLocation, false);
+                                }
+
+                                const HalfLifeModelTexture& hltexture = mModel->GetTexture(textureIdx);
+                                mShaderModel->setUniformValue(mIsChromeLocation, hltexture.chrome);
+                                if (renderTextured && hltexture.masked) {
+                                    mShaderModel->setUniformValue(mAlphaTestLocation, 0.5f, 0.5f, 0.5f, 0.5f);
+                                } else {
                                     mShaderModel->setUniformValue(mAlphaTestLocation, -1.0f, -1.0f, -1.0f, -1.0f);
                                 }
-
-                                if (drawCycle == kCycleWireframeOverlay) {
-                                    mShaderModel->setUniformValue(mIsChromeLocation, true);
-                                    mShaderModel->setUniformValue(mForcedColorLocation, 1.0f, 0.0f, 0.95f, 1.0f);
-                                }
-
-                                glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                            } else {
+                                mWhiteTexture->bind();
+                                mShaderModel->setUniformValue(mIsChromeLocation, false);
+                                mShaderModel->setUniformValue(mAlphaTestLocation, -1.0f, -1.0f, -1.0f, -1.0f);
                             }
-                        } else {
-                            constexpr uint32_t normalsColor = 0xFFFF0000;
-                            constexpr float r = 1.0f;
 
-                            const size_t numVertices = smdl->GetVerticesCount();
-                            for (size_t idx = 0; idx < numVertices; ++idx) {
-                                const vec3f& pos = *rcast<const vec3f*>(rcast<const char*>(posPtr) + idx * vertexSize);
-                                const vec3f& normal = *rcast<const vec3f*>(rcast<const char*>(normalsPtr) + idx * vertexSize);
-
-                                this->DebugDrawLine(pos, pos + (normal * r), normalsColor);
+                            if (drawCycle == kCycleWireframeOverlay) {
+                                mShaderModel->setUniformValue(mIsChromeLocation, true);
+                                mShaderModel->setUniformValue(mForcedColorLocation, 1.0f, 0.0f, 0.95f, 1.0f);
                             }
+
+                            glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                        }
+                    } else {
+                        constexpr uint32_t normalsColor = 0xFFFF0000;
+                        constexpr float r = 1.0f;
+
+                        const size_t numVertices = smdl->GetVerticesCount();
+                        for (size_t idx = 0; idx < numVertices; ++idx) {
+                            const vec3f& pos = *rcast<const vec3f*>(rcast<const char*>(posPtr) + idx * vertexSize);
+                            const vec3f& normal = *rcast<const vec3f*>(rcast<const char*>(normalsPtr) + idx * vertexSize);
+
+                            this->DebugDrawLine(pos, pos + (normal * r), normalsColor);
                         }
                     }
                 }
