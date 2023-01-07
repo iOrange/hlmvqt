@@ -387,6 +387,9 @@ void RenderView::paintGL() {
             }
 
             if (!debugStrings.empty()) {
+                glDisable(GL_POLYGON_OFFSET_FILL);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
                 for (const auto& p : debugStrings) {
                     QPainter painter;
                     painter.begin(this);
