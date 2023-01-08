@@ -8,6 +8,7 @@
 #include <QMimeData>
 #include <QDragEnterEvent>
 #include <QDir>
+#include <QColorDialog>
 
 #include "aboutdlg.h"
 #include "halflifemodel.h"
@@ -151,6 +152,21 @@ void MainWindow::on_actionE_xit_triggered() {
     this->close();
 }
 
+void MainWindow::on_actionReset_view_triggered() {
+    if (mModel) {
+        mRenderView->ResetView();
+    }
+}
+
+void MainWindow::on_actionShow_stats_toggled(bool b) {
+    mRenderView->SetShowStats(b);
+}
+
+void MainWindow::on_actionBackground_color_triggered() {
+    vec4f colorF = mRenderView->GetBackgroundColor();
+    QColor newColor = QColorDialog::getColor(QColor::fromRgbF(colorF.x, colorF.y, colorF.z), this, tr("Choose background color"));
+    mRenderView->SetBackgroundColor(vec4f(newColor.redF(), newColor.greenF(), newColor.blueF(), 0.0f));
+}
 
 void MainWindow::on_actionAbout_Qt_triggered() {
     QMessageBox::aboutQt(this, tr("About Qt..."));
@@ -553,7 +569,6 @@ void MainWindow::on_lstBodySubModels_currentRowChanged(int currentRow) {
             const HalfLifeModelBodypart* bodyPart = mModel->GetBodyPart(scast<size_t>(bodyPartIdx));
 
             if (currentRow >= 0 && currentRow < bodyPart->GetStudioModelsCount()) {
-                //const HalfLifeModelStudioModel* smdl = bodyPart->GetStudioModel(scast<size_t>(currentRow));
                 mModel->SetBodyPartActiveSubModel(bodyPartIdx, scast<size_t>(currentRow));
             }
         }
@@ -566,4 +581,3 @@ void MainWindow::on_lstSkins_currentRowChanged(int currentRow) {
         mModel->SetActiveSkin(scast<size_t>(currentRow));
     }
 }
-

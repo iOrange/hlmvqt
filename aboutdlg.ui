@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>595</width>
+    <height>327</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,10 +25,10 @@
   <widget class="QTextBrowser" name="textBrowser">
    <property name="geometry">
     <rect>
-     <x>5</x>
-     <y>50</y>
+     <x>200</x>
+     <y>10</y>
      <width>391</width>
-     <height>192</height>
+     <height>281</height>
     </rect>
    </property>
    <property name="html">
@@ -39,15 +39,16 @@ hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Hello there!&lt;br /&gt;This is &lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;HLMVQT&lt;/span&gt; - a Half-Life 1 model viewer based on the source code&lt;/p&gt;
-&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;of the original &lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;HLMV&lt;/span&gt; tool v1.25 written by Mete Ciragan in 2002.&lt;br /&gt;Unlike&lt;span style=&quot; font-style:italic;&quot;&gt; Xash3D Model Viewer&lt;/span&gt;, this is a complete rewrite using modern Qt library, so it supports all the new modern platforms and their features, including High DPI monitors and so.&lt;br /&gt;I hope you'll enjoy it!&lt;br /&gt;&lt;br /&gt;Sergii '&lt;span style=&quot; font-weight:700; color:#ff5500;&quot;&gt;iOrange&lt;/span&gt;' Kudlai&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Hello there!&lt;br /&gt;This is &lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;HLMVQT v0.97&lt;/span&gt; - Half-Life 1 model viewer written from scratch using Qt.&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;It was inspired by the original &lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;HLMV&lt;/span&gt; tool v1.25 written by Mete Ciragan in 2002.&lt;br /&gt;Unlike other &lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;HLMV &lt;/span&gt;forks, this is a complete rewrite using modern Qt library, so it supports all the new modern platforms and their features, including High DPI monitors and so on.&lt;/p&gt;
+&lt;p align=&quot;justify&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;It even fixes some long-standing issues that all other viewers inherit from the original &lt;span style=&quot; font-weight:700; font-style:italic;&quot;&gt;HLMV &lt;/span&gt;- it now allows you to view skins even when they're in external file.&lt;br /&gt;I hope you'll enjoy it!&lt;br /&gt;&lt;br /&gt;Sergii '&lt;span style=&quot; font-weight:700; color:#ff5500;&quot;&gt;iOrange&lt;/span&gt;' Kudlai&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>260</y>
+     <x>510</x>
+     <y>300</y>
      <width>80</width>
      <height>24</height>
     </rect>
@@ -56,7 +57,34 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>OK</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>180</width>
+     <height>180</height>
+    </rect>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap resource="resources.qrc">:/hlmvqt_icon.png</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -99,7 +99,6 @@ protected:
 
     void                            MakeShader(StrongPtr<QOpenGLShaderProgram>& shader, const char* vs, const char* fs);
     void                            UpdateMatrices();
-    void                            ResetView();
 
     void                            BeginDebugDraw(const bool depthTest = false);
     void                            EndDebugDraw();
@@ -115,11 +114,17 @@ public:
     void                            SetModel(HalfLifeModel* mdl);
     void                            SetRenderOptions(const RenderOptions& options);
     const RenderOptions&            GetRenderOptions() const;
+    void                            SetShowStats(const bool show);
+    void                            ResetView();
+    void                            SetBackgroundColor(const vec4f& color);
+    const vec4f&                    GetBackgroundColor() const;
 
 private:
     QOpenGLContext*                 mGLContext;
     QBasicTimer                     mTimer;
     FPSMeter                        mFPSMeter;
+    bool                            mShowStats;
+    vec4f                           mBackgroundColor;
 
     HalfLifeModel*                  mModel;
     MyArray<RenderVertex>           mRenderVertices;

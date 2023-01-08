@@ -32,6 +32,7 @@ set(PROJECT_SOURCES
     render_shaders.inl
     halflifemodel.h
     halflifemodel.cpp
+    resources.qrc
     ${TS_FILES}
     ${app_icon_resource_windows}
 )

@@ -37,6 +37,9 @@ RenderView::RenderView(QWidget* parent)
     : QOpenGLWidget(parent)
     , QOpenGLFunctions_2_0()
     , mGLContext(nullptr)
+    , mFPSMeter{}
+    , mShowStats(true)
+    , mBackgroundColor(40.0f / 255.0f, 113.0f / 255.0f, 134.0f / 255.0f, 0.0f)
     , mModel(nullptr)
     , mAnimationFrame(0.0f)
     , mShaderModel{}
@@ -63,11 +66,10 @@ RenderView::~RenderView() {
 }
 
 
-
 void RenderView::initializeGL() {
     initializeOpenGLFunctions();
 
-    glClearColor(40.0f / 255.0f, 113.0f / 255.0f, 134.0f / 255.0f, 0.0f);
+    glClearColor(mBackgroundColor.x, mBackgroundColor.y, mBackgroundColor.z, mBackgroundColor.w);
     glClearDepth(1.0);
 
     this->MakeShader(mShaderModel, g_VS_DrawModel, g_FS_DrawModel);
@@ -108,6 +110,8 @@ void RenderView::initializeGL() {
 }
 
 void RenderView::paintGL() {
+    glClearColor(mBackgroundColor.x, mBackgroundColor.y, mBackgroundColor.z, mBackgroundColor.w);
+    glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
@@ -422,20 +426,22 @@ void RenderView::paintGL() {
                 }
             }
 
-            // draw stats
-            QString stats = QString("FPS: %1\nFrame time: %2\nTriangles: %3\nDraw calls: %4").arg(QString::number(mFPSMeter.GetFPS(), 'f', 1))
-                                                                                             .arg(QString::number(mFPSMeter.GetFrameTime(), 'f', 1))
-                                                                                             .arg(totalTriangles)
-                                                                                             .arg(totalDrawcalls);
-            QPainter painter;
-            painter.begin(this);
+            if (mShowStats) {
+                // draw stats
+                QString stats = QString("FPS: %1\nFrame time: %2\nTriangles: %3\nDraw calls: %4").arg(QString::number(mFPSMeter.GetFPS(), 'f', 1))
+                                                                                                 .arg(QString::number(mFPSMeter.GetFrameTime(), 'f', 1))
+                                                                                                 .arg(totalTriangles)
+                                                                                                 .arg(totalDrawcalls);
+                QPainter painter;
+                painter.begin(this);
 
-            painter.setPen(Qt::black);
-            QRect rc = this->rect();
-            rc.moveLeft(3);
-            rc.moveTop(3);
-            painter.drawText(rc, Qt::AlignLeft | Qt::AlignTop, stats);
-            painter.end();
+                painter.setPen(Qt::black);
+                QRect rc = this->rect();
+                rc.moveLeft(3);
+                rc.moveTop(3);
+                painter.drawText(rc, Qt::AlignLeft | Qt::AlignTop, stats);
+                painter.end();
+            }
         }
     }
 }
@@ -505,7 +511,6 @@ void RenderView::timerEvent(QTimerEvent* event) {
     }
 }
 
-
 void RenderView::MakeShader(StrongPtr<QOpenGLShaderProgram>& shader, const char* vs, const char* fs) {
     shader = MakeStrongPtr<QOpenGLShaderProgram>();
     if (shader->addShaderFromSourceCode(QOpenGLShader::Vertex, vs) &&
@@ -532,25 +537,6 @@ void RenderView::UpdateMatrices() {
 
     mModelView = mViewMat * mModelMat;
     mModelViewProj = mProjectionMat * mModelView;
-}
-
-void RenderView::ResetView() {
-    if (mModel) {
-        const AABBox& bounds = mModel->GetBounds();
-
-        const float dx = bounds.maximum.x - bounds.minimum.x;
-        const float dy = bounds.maximum.y - bounds.minimum.y;
-        const float dz = bounds.maximum.z - bounds.minimum.z;
-        const float d = Max3(dx, dy, dz);
-
-        mOffset = vec3f(0.0f, -(bounds.minimum.z + dz * 0.5f), -d);
-        mRotAngles = vec3f(-90.0f, -90.0f, 0.0f);
-    } else {
-        mOffset = vec3f(0.0f, 0.0f, 0.0f);
-        mRotAngles = vec3f(0.0f, 0.0f, 0.0f);
-    }
-
-    this->UpdateMatrices();
 }
 
 void RenderView::BeginDebugDraw(const bool depthTest /*= false*/) {
@@ -789,3 +775,33 @@ const RenderOptions& RenderView::GetRenderOptions() const {
     return mRenderOptions;
 }
 
+void RenderView::SetShowStats(const bool show) {
+    mShowStats = show;
+}
+
+void RenderView::ResetView() {
+    if (mModel) {
+        const AABBox& bounds = mModel->GetBounds();
+
+        const float dx = bounds.maximum.x - bounds.minimum.x;
+        const float dy = bounds.maximum.y - bounds.minimum.y;
+        const float dz = bounds.maximum.z - bounds.minimum.z;
+        const float d = Max3(dx, dy, dz);
+
+        mOffset = vec3f(0.0f, -(bounds.minimum.z + dz * 0.5f), -d);
+        mRotAngles = vec3f(-90.0f, -90.0f, 0.0f);
+    } else {
+        mOffset = vec3f(0.0f, 0.0f, 0.0f);
+        mRotAngles = vec3f(0.0f, 0.0f, 0.0f);
+    }
+
+    this->UpdateMatrices();
+}
+
+void RenderView::SetBackgroundColor(const vec4f& color) {
+    mBackgroundColor = color;
+}
+
+const vec4f& RenderView::GetBackgroundColor() const {
+    return mBackgroundColor;
+}

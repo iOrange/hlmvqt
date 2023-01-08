@@ -31,6 +31,9 @@ private slots:
     void                        on_actionLoad_model_triggered();
     void                        on_actionRecentModel_triggered(const size_t recentModelIdx);
     void                        on_actionE_xit_triggered();
+    void                        on_actionReset_view_triggered();
+    void                        on_actionShow_stats_toggled(bool b);
+    void                        on_actionBackground_color_triggered();
     void                        on_actionAbout_Qt_triggered();
     void                        on_actionAbout_triggered();
     void                        on_lstTextures_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
