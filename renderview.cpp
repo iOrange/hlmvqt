@@ -17,6 +17,22 @@ enum : int {
 constexpr size_t kMaxDebugDrawVertices = 4096;
 
 
+void FPSMeter::Update(const float dt) {
+    this->fpsAccumulator += dt - this->fpsHistory[this->historyPointer];
+    this->fpsHistory[this->historyPointer] = dt;
+    this->historyPointer = (this->historyPointer + 1) % FPSMeter::kFPSHistorySize;
+    this->fps = (this->fpsAccumulator > 0.0f) ? (1.0f / (this->fpsAccumulator / static_cast<float>(FPSMeter::kFPSHistorySize))) : FLT_MAX;
+}
+
+float FPSMeter::GetFPS() const {
+    return this->fps;
+}
+
+float FPSMeter::GetFrameTime() const {
+    return 1000.0f / this->fps;
+}
+
+
 RenderView::RenderView(QWidget* parent)
     : QOpenGLWidget(parent)
     , QOpenGLFunctions_2_0()
@@ -105,7 +121,16 @@ void RenderView::paintGL() {
     glEnable(GL_LINE_SMOOTH);
     glLineWidth(1);
 
+    QDateTime curTime = QDateTime::currentDateTime();
+    const int deltaMs = qAbs(curTime.time().msecsTo(mLastTime.time()));
+    const float deltaSec = scast<float>(deltaMs) / 1000.0f;
+    mLastTime = curTime;
+    mFPSMeter.Update(deltaSec);
+
     if (mModel) {
+        size_t totalTriangles = 0;
+        size_t totalDrawcalls = 0;
+
         if (mRenderOptions.imageViewerMode) {
             glDisable(GL_CULL_FACE);
 
@@ -145,11 +170,6 @@ void RenderView::paintGL() {
 
             if (mModel->GetBonesCount() > 0 && mModel->GetSequencesCount() > 0) {
                 const HalfLifeModelSequence* sequence = mModel->GetSequence(scast<size_t>(mRenderOptions.animSequence));
-
-                QDateTime curTime = QDateTime::currentDateTime();
-                const int deltaMs = qAbs(curTime.time().msecsTo(mLastTime.time()));
-                const float deltaSec = scast<float>(deltaMs) / 1000.0f;
-                mLastTime = curTime;
 
                 mAnimationFrame += deltaSec * sequence->GetFPS();
                 if (mAnimationFrame >= scast<float>(sequence->GetFramesCount())) {
@@ -284,6 +304,8 @@ void RenderView::paintGL() {
                             }
 
                             glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
+                            totalTriangles += mesh.numIndices / 3;
+                            totalDrawcalls++;
                         }
                     } else {
                         constexpr uint32_t normalsColor = 0xFFFF0000;
@@ -399,6 +421,21 @@ void RenderView::paintGL() {
                     painter.end();
                 }
             }
+
+            // draw stats
+            QString stats = QString("FPS: %1\nFrame time: %2\nTriangles: %3\nDraw calls: %4").arg(QString::number(mFPSMeter.GetFPS(), 'f', 1))
+                                                                                             .arg(QString::number(mFPSMeter.GetFrameTime(), 'f', 1))
+                                                                                             .arg(totalTriangles)
+                                                                                             .arg(totalDrawcalls);
+            QPainter painter;
+            painter.begin(this);
+
+            painter.setPen(Qt::black);
+            QRect rc = this->rect();
+            rc.moveLeft(3);
+            rc.moveTop(3);
+            painter.drawText(rc, Qt::AlignLeft | Qt::AlignTop, stats);
+            painter.end();
         }
     }
 }

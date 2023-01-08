@@ -27,6 +27,19 @@ struct DebugVertex {
     uint32_t color;
 } PACKED_STRUCT_END;
 
+struct FPSMeter {
+    static const size_t kFPSHistorySize = 128;
+
+    float   fpsHistory[kFPSHistorySize] = { 0.0f };
+    size_t  historyPointer = 0;
+    float   fpsAccumulator = 0.0f;
+    float   fps = 0.0f;
+
+    void    Update(const float dt);
+    float   GetFPS() const;
+    float   GetFrameTime() const;
+};
+
 struct RenderOptions {
     bool  renderTextured;
     bool  showBones;
@@ -106,6 +119,7 @@ public:
 private:
     QOpenGLContext*                 mGLContext;
     QBasicTimer                     mTimer;
+    FPSMeter                        mFPSMeter;
 
     HalfLifeModel*                  mModel;
     MyArray<RenderVertex>           mRenderVertices;
