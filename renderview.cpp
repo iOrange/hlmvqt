@@ -308,8 +308,10 @@ void RenderView::paintGL() {
                             }
 
                             glDrawElements(GL_TRIANGLES, scast<GLsizei>(mesh.numIndices), GL_UNSIGNED_SHORT, indices + mesh.indicesOffset);
-                            totalTriangles += mesh.numIndices / 3;
-                            totalDrawcalls++;
+                            if (drawCycle == kCycleDraw) {
+                                totalTriangles += mesh.numIndices / 3;
+                                totalDrawcalls++;
+                            }
                         }
                     } else {
                         constexpr uint32_t normalsColor = 0xFFFF0000;
@@ -412,10 +414,10 @@ void RenderView::paintGL() {
                 this->EndDebugDraw();
             }
 
-            if (!debugStrings.empty()) {
-                glDisable(GL_POLYGON_OFFSET_FILL);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDisable(GL_POLYGON_OFFSET_FILL);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+            if (!debugStrings.empty()) {
                 for (const auto& p : debugStrings) {
                     QPainter painter;
                     painter.begin(this);
